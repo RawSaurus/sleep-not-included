@@ -5,6 +5,12 @@ import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.model.User;
 import com.rawsaurus.sleep_not_included.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +28,18 @@ public class UserController {
     @GetMapping("/name/{username}")
     public ResponseEntity<UserResponse> findUserByName(@PathVariable String username){
         return ResponseEntity.ok(userService.findUserByName(username));
+    }
+
+    //probably hardcode pageable values
+    @GetMapping("/search/{username}")
+    public ResponseEntity<Page<UserResponse>> findUsersByNameLike(
+            @PathVariable String username,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection){
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return ResponseEntity.ok(userService.findUsersByNameLike(username, pageable));
     }
 
     @PostMapping("/create")

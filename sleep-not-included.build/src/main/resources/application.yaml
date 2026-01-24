@@ -1,8 +1,10 @@
 spring:
+  profiles:
+    active: dev
   config:
-    import: env.properties
+    import: env.properties, optional:configserver:http://localhost:8888
   application:
-    name: sleep-not-included.build
+    name: sleep-not-included-build
   datasource:
     url: jdbc:postgresql://localhost:5432/sleep-not-included-build
     username: ${PSQL_USERNAME}

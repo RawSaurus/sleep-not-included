@@ -2,16 +2,32 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Annotation profile for config-management" enabled="true">
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Annotation profile for sleep-not-included.user" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/${version.mapstruct}/mapstruct-processor-${version.mapstruct}.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/${version.lombok}/lombok-${version.lombok}.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/${version.mapstruct-lombok}/lombok-mapstruct-binding-${version.mapstruct-lombok}.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/unknown/mapstruct-processor-unknown.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/unknown/lombok-mapstruct-binding-unknown.jar" />
         </processorPath>
-        <module name="sleep-not-included.build" />
         <module name="config-management" />
         <module name="sleep-not-included.user" />
+      </profile>
+      <profile name="Annotation profile for sleep-not-included.build" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/unknown/mapstruct-processor-unknown.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/unknown/lombok-mapstruct-binding-unknown.jar" />
+        </processorPath>
+        <module name="sleep-not-included.build" />
       </profile>
     </annotationProcessing>
   </component>

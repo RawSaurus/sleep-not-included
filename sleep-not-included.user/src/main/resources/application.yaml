@@ -1,8 +1,10 @@
 spring:
+  profiles:
+    active: dev
   config:
-    import: env.properties
+    import: env.properties, optional:configserver:http://localhost:8888
   application:
-    name: sleep-not-included.user
+    name: sleep-not-included-user
   datasource:
     url: jdbc:postgresql://localhost:5432/sleep-not-included-user
     username: ${PSQL_USERNAME}
@@ -13,7 +15,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-
+sni:
+  message: "test"
 server:
   port: 8081
   servlet:
