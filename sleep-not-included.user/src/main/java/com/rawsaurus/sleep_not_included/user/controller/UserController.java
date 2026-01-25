@@ -13,12 +13,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
 
 @RequiredArgsConstructor
 @RestController
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/test")
+    public String test(){
+        RestClient restClient = RestClient.create();
+        String res = restClient.get()
+                .uri("http://localhost:8082/api/v1/test-info")
+                .retrieve()
+                .body(String.class);
+        return res;
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> findUser(@PathVariable Long userId){
