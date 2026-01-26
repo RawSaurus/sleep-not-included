@@ -12,6 +12,7 @@
         <option value="$PROJECT_DIR$/sleep-not-included.user/pom.xml" />
         <option value="$PROJECT_DIR$/sleep-not-included.build/pom.xml" />
         <option value="$PROJECT_DIR$/config-management/pom.xml" />
+        <option value="$PROJECT_DIR$/eureka/pom.xml" />
       </list>
     </option>
   </component>
