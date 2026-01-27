@@ -82,13 +82,25 @@ public class BuildController {
         return ResponseEntity.ok(buildService.createBuild(userId, request));
     }
 
+    @PostMapping("/like/{userId}/{buildId}")
+    public ResponseEntity<?> likeBuild(@PathVariable Long userId, @PathVariable Long buildId){
+        buildService.likeBuild(userId, buildId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{userId}/{buildId}")
     public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long userId, @PathVariable Long buildId, @RequestBody BuildRequest request){
         return ResponseEntity.ok(buildService.updateBuild(userId, buildId, request));
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteBuild(@PathVariable Long userId, Long buildId){
+    @DeleteMapping("/{userId}/{buildId}")
+    public ResponseEntity<?> deleteBuild(@PathVariable Long userId, @PathVariable Long buildId){
         return ResponseEntity.ok(buildService.deleteBuild(userId, buildId));
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<?> deleteAllFromUser(@PathVariable Long userId){
+        buildService.deleteAllFromUser(userId);
+        return ResponseEntity.ok().build();
     }
 }

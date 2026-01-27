@@ -17,6 +17,7 @@ import org.springframework.web.client.RestClient;
 
 @RequiredArgsConstructor
 @RestController
+@RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
@@ -53,14 +54,17 @@ public class UserController {
         return ResponseEntity.ok(userService.findUsersByNameLike(username, pageable));
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request){
         return ResponseEntity.ok(userService.createUser(request));
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long userId){
-        return ResponseEntity.ok(userService.updateUser(userId));
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long userId,
+            @RequestBody UserRequest request
+    ){
+        return ResponseEntity.ok(userService.updateUser(userId, request));
     }
 
     @DeleteMapping("/{userId}")

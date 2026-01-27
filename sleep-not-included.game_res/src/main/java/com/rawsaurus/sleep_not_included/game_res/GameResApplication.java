@@ -1,13 +1,13 @@
-package com.rawsaurus.sleep_not_included.user;
+package com.rawsaurus.sleep_not_included.game_res;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Application {
+public class GameResApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+		SpringApplication.run(GameResApplication.class, args);
 	}
 
 }

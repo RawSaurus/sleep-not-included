@@ -1,0 +1,23 @@
+spring:
+  profiles:
+    active: dev
+  config:
+    import: env.properties, optional:configserver:http://localhost:8888
+  application:
+    name: sleep-not-included-gameres
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sleep-not-included-gameres
+    username: ${PSQL_USERNAME}
+    password: ${PSQL_PASSWORD}
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+sni:
+  message: "test"
+server:
+  port: 8086
+  servlet:
+    context-path: /api/v1/

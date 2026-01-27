@@ -23,7 +23,7 @@ public class Build {
     private String description;
     private Integer likes;
 
-    private Long userId;
+    private Long creatorId;
     private Set<Long> tagsId;
     private Set<Long> dlcId;
     private Set<Long> commentsId;

@@ -45,11 +45,25 @@ public class UserService {
         );
     }
 
-    public UserResponse updateUser(Long userId){
-        return null;
+    public UserResponse updateUser(Long userId, UserRequest request){
+        //check for user
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        userMapper.updateToEntity(request, user);
+
+        return userMapper.toResponse(userRepo.save(user));
     }
 
     public String deleteUser(Long userId){
-        return null;
+        //check for user
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        //delete related entities
+
+        userRepo.delete(user);
+
+        return "User deleted successfully";
     }
 }

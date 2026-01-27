@@ -1,13 +1,13 @@
-package com.rawsaurus.sleep_not_included.build;
+package com.rawsaurus.sleep_not_included.image;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Application {
+public class ImageApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+		SpringApplication.run(ImageApplication.class, args);
 	}
 
 }
