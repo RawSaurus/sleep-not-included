@@ -39,42 +39,42 @@ public class BuildService {
     }
 
     public BuildResponse findById(Long id){
-        Build build = buildRepo.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
-        List<TagResponse> tags = tagClient.findAllByBuild(id).getBody();
-
-        return new BuildResponse(
-                build.getId(),
-                build.getName(),
-                build.getDescription(),
-                tags,
-                build.getCreatorId(),
-                build.getLikes()
-        );
-
-//        return buildMapper.toResponse(
-//                buildRepo.findById(id)
-//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//        Build build = buildRepo.findById(id)
+//                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+//        List<TagResponse> tags = tagClient.findAllByBuild(id).getBody();
+//
+//        return new BuildResponse(
+//                build.getId(),
+//                build.getName(),
+//                build.getDescription(),
+//                tags,
+//                build.getCreatorId(),
+//                build.getLikes()
 //        );
+
+        return buildMapper.toResponse(
+                buildRepo.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+        );
     }
 
     public BuildResponse findByName(String name){
-        Build build = buildRepo.findByName(name)
-                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
-        List<TagResponse> tags = tagClient.findAllByBuild(build.getId()).getBody();
-
-        return new BuildResponse(
-                build.getId(),
-                build.getName(),
-                build.getDescription(),
-                tags,
-                build.getCreatorId(),
-                build.getLikes()
-        );
-//        return buildMapper.toResponse(
-//                buildRepo.findByName(name)
-//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//        Build build = buildRepo.findByName(name)
+//                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+//        List<TagResponse> tags = tagClient.findAllByBuild(build.getId()).getBody();
+//
+//        return new BuildResponse(
+//                build.getId(),
+//                build.getName(),
+//                build.getDescription(),
+//                tags,
+//                build.getCreatorId(),
+//                build.getLikes()
 //        );
+        return buildMapper.toResponse(
+                buildRepo.findByName(name)
+                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+        );
     }
 
     public Page<BuildResponse> suggestSearch(String name){
@@ -89,10 +89,10 @@ public class BuildService {
     }
 
     //rework
-    public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
-        return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
-                .map(buildMapper::toResponse);
-    }
+//    public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
+//        return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
+//                .map(buildMapper::toResponse);
+//    }
 
     public Page<BuildResponse> findAllFromUser(Long userId, Pageable pageable){
         var user = userClient.findUserById(userId).getBody();
@@ -128,8 +128,11 @@ public class BuildService {
         }
         Build build = buildMapper.toEntity(request);
         build.setCreatorId(user.id());
+        build.setLikes(1);
         var res = buildMapper.toResponse(buildRepo.save(build));
-        tagClient.addTagsToBuild(res.id(), request.tagId());
+        if(!request.tagId().isEmpty()) {
+            tagClient.addTagsToBuild(res.id(), request.tagId());
+        }
 
         return res;
     }

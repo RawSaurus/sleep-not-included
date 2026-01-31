@@ -52,18 +52,18 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAll(pageable));
     }
 
-    @GetMapping("/filters")
-    public ResponseEntity<Page<BuildResponse>> findAllWithFilters(
-            @RequestBody Set<Long> tags,  // temp type
-            @RequestBody Set<Long> dlc,
-            @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-    ){
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-        return ResponseEntity.ok(buildService.findAllWithFilters(tags, dlc, pageable));
-    }
+//    @GetMapping("/filters")
+//    public ResponseEntity<Page<BuildResponse>> findAllWithFilters(
+//            @RequestBody Set<Long> tags,  // temp type
+//            @RequestBody Set<Long> dlc,
+//            @RequestParam(value = "page", defaultValue = "0") Integer page,
+//            @RequestParam(value = "size", defaultValue = "10") Integer size,
+//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+//    ){
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+//        return ResponseEntity.ok(buildService.findAllWithFilters(tags, dlc, pageable));
+//    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<BuildResponse>> findAllFromUser(

@@ -29,7 +29,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.findById(id));
     }
 
-    @GetMapping("/{buildId}")
+    @GetMapping("/build/{buildId}")
     public ResponseEntity<Page<CommentResponse>> findAllByBuild(
             @PathVariable Long buildId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -41,7 +41,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.findAllByBuild(buildId, pageable));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<Page<CommentResponse>> findAllByUser(
             @PathVariable Long userId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,

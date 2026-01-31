@@ -41,7 +41,7 @@ public class TagController {
         return ResponseEntity.ok(tagService.findAllByType(type));
     }
 
-    @GetMapping("/builds")
+    @GetMapping("/builds") // change
     public ResponseEntity<List<BuildTags>> findAllBuildsByTags(@RequestBody List<Tag> tags){
         return ResponseEntity.ok(tagService.findAllBuildsByTags(tags));
     }
@@ -62,7 +62,7 @@ public class TagController {
     }
 
     @PostMapping("/build/{buildId}")
-    public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestParam List<Long> tagIds){
+    public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestBody List<Long> tagIds){
         tagService.addTagsToBuild(buildId, tagIds);
         return ResponseEntity.ok().build();
     }
