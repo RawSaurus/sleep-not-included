@@ -21,9 +21,9 @@ public class BuildController {
 
     private final BuildService buildService;
 
-    @GetMapping("/test-info")
-    public String testInfo(){
-        return "Build test info";
+    @GetMapping("/test-info/{userId}")
+    public String testInfo(@PathVariable Long userId){
+        return buildService.test(userId);
     }
 
     @GetMapping("/{id}")
@@ -31,7 +31,7 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findById(id));
     }
 
-    @GetMapping("/{name}")
+    @GetMapping("/name/{name}")
     public ResponseEntity<BuildResponse> findByName(@PathVariable String name){
         return ResponseEntity.ok(buildService.findByName(name));
     }

@@ -1,6 +1,9 @@
 package com.rawsaurus.sleep_not_included.tag.controller;
 
+import com.rawsaurus.sleep_not_included.tag.dto.TagRequest;
 import com.rawsaurus.sleep_not_included.tag.dto.TagResponse;
+import com.rawsaurus.sleep_not_included.tag.model.BuildTags;
+import com.rawsaurus.sleep_not_included.tag.model.Tag;
 import com.rawsaurus.sleep_not_included.tag.model.Type;
 import com.rawsaurus.sleep_not_included.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
@@ -36,5 +39,41 @@ public class TagController {
     @GetMapping("/type/{type}")
     public ResponseEntity<List<TagResponse>> findAllByType(@PathVariable Type type){
         return ResponseEntity.ok(tagService.findAllByType(type));
+    }
+
+    @GetMapping("/builds")
+    public ResponseEntity<List<BuildTags>> findAllBuildsByTags(@RequestBody List<Tag> tags){
+        return ResponseEntity.ok(tagService.findAllBuildsByTags(tags));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TagResponse>> findAll(){
+        return ResponseEntity.ok(tagService.findAll());
+    }
+
+    @GetMapping("/build/{buildId}")
+    public ResponseEntity<List<TagResponse>> findAllByBuild(@PathVariable Long buildId){
+        return ResponseEntity.ok(tagService.findAllByBuild(buildId));
+    }
+
+    @PostMapping
+    public ResponseEntity<TagResponse> createTag(@RequestBody TagRequest request){
+        return ResponseEntity.ok(tagService.createTag(request));
+    }
+
+    @PostMapping("/build/{buildId}")
+    public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestParam List<Long> tagIds){
+        tagService.addTagsToBuild(buildId, tagIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TagResponse> updateTag(@PathVariable Long id, @RequestBody TagRequest request){
+        return ResponseEntity.ok(tagService.updateTag(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTag(@PathVariable Long id){
+        return ResponseEntity.ok(tagService.deleteTag(id));
     }
 }

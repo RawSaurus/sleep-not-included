@@ -1,13 +1,13 @@
 package com.rawsaurus.sleep_not_included.build.dto;
 
-import java.util.Set;
+
+import java.util.List;
 
 public record BuildResponse(
         Long id,
         String name,
         String description,
-        Set<Long> tagsId,
-        Set<Long> dlcId,
-        Long creatorId
-) {
+        List<TagResponse> tags,
+        Long creatorId,
+        Integer likes) {
 }

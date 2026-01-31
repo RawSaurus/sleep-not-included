@@ -48,7 +48,7 @@ public class UserController {
             @PathVariable String username,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+            @RequestParam(value = "sort", defaultValue = "username") String sortBy,
             @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection){
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         return ResponseEntity.ok(userService.findUsersByNameLike(username, pageable));

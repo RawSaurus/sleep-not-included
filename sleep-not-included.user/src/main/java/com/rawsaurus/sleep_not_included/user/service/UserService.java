@@ -33,7 +33,7 @@ public class UserService {
     }
 
     public Page<UserResponse> findUsersByNameLike(String username, Pageable pageable){
-        return userRepo.findAllByUsernameLikeIgnoreCase(username, pageable)
+        return userRepo.findAllByusernameLikeIgnoreCase(username, pageable)
                 .map(userMapper::toResponse);
     }
 

@@ -1,7 +1,10 @@
 package com.rawsaurus.sleep_not_included.build.service;
 
+import com.rawsaurus.sleep_not_included.build.clients.TagClient;
+import com.rawsaurus.sleep_not_included.build.clients.UserClient;
 import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
 import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
+import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
 import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
 import com.rawsaurus.sleep_not_included.build.model.Build;
 import com.rawsaurus.sleep_not_included.build.model.LikedBuilds;
@@ -26,20 +29,52 @@ public class BuildService {
     private final BuildRepository buildRepo;
     private final LikedBuildsRepository likedBuildsRepo;
 
+    private final UserClient userClient;
+    private final TagClient tagClient;
+
     private final BuildMapper buildMapper;
 
+    public String test(Long userId){
+        return userClient.findUserById(userId).getBody().toString();
+    }
+
     public BuildResponse findById(Long id){
-        return buildMapper.toResponse(
-                buildRepo.findById(id)
-                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+        Build build = buildRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+        List<TagResponse> tags = tagClient.findAllByBuild(id).getBody();
+
+        return new BuildResponse(
+                build.getId(),
+                build.getName(),
+                build.getDescription(),
+                tags,
+                build.getCreatorId(),
+                build.getLikes()
         );
+
+//        return buildMapper.toResponse(
+//                buildRepo.findById(id)
+//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//        );
     }
 
     public BuildResponse findByName(String name){
-        return buildMapper.toResponse(
-                buildRepo.findByName(name)
-                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+        Build build = buildRepo.findByName(name)
+                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+        List<TagResponse> tags = tagClient.findAllByBuild(build.getId()).getBody();
+
+        return new BuildResponse(
+                build.getId(),
+                build.getName(),
+                build.getDescription(),
+                tags,
+                build.getCreatorId(),
+                build.getLikes()
         );
+//        return buildMapper.toResponse(
+//                buildRepo.findByName(name)
+//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//        );
     }
 
     public Page<BuildResponse> suggestSearch(String name){
@@ -53,18 +88,26 @@ public class BuildService {
                 .map(buildMapper::toResponse);
     }
 
+    //rework
     public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
         return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
                 .map(buildMapper::toResponse);
     }
 
     public Page<BuildResponse> findAllFromUser(Long userId, Pageable pageable){
-        return buildRepo.findAllByCreatorId(userId, pageable)
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
+        return buildRepo.findAllByCreatorId(user.id(), pageable)
                 .map(buildMapper::toResponse);
     }
 
     public List<BuildResponse> findAllByLikes(Long userId){
-        //check user
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
         List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
         List<BuildResponse> builds = new ArrayList<>();
         for(LikedBuilds l : likedBuilds){
@@ -79,17 +122,27 @@ public class BuildService {
     }
 
     public BuildResponse createBuild(Long creatorId, BuildRequest request){
+        var user = userClient.findUserById(creatorId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
         Build build = buildMapper.toEntity(request);
-        build.setCreatorId(creatorId);
-        return buildMapper.toResponse(buildRepo.save(build));
+        build.setCreatorId(user.id());
+        var res = buildMapper.toResponse(buildRepo.save(build));
+        tagClient.addTagsToBuild(res.id(), request.tagId());
+
+        return res;
     }
 
     public void likeBuild(Long userId, Long buildId){
-        //check user
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
         Build build = buildRepo.findById(buildId)
                 .orElseThrow(() -> new EntityNotFoundException("Build not found"));
 
-        Optional<LikedBuilds> likedBuilds = likedBuildsRepo.findByUserIdAndBuildId(userId, buildId);
+        Optional<LikedBuilds> likedBuilds = likedBuildsRepo.findByUserIdAndBuildId(user.id(), buildId);
 
         if(likedBuilds.isPresent()){
             build.setLikes(build.getLikes() - 1);
@@ -106,7 +159,10 @@ public class BuildService {
     }
 
     public BuildResponse updateBuild(Long userId, Long buildId, BuildRequest request){
-        //check user
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
         Build build = buildRepo.findById(buildId)
                 .orElseThrow(() -> new EntityNotFoundException("Build not found"));
 
@@ -116,7 +172,10 @@ public class BuildService {
     }
 
     public String deleteBuild(Long userId, Long buildId){
-        //check user
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
         Build build = buildRepo.findById(buildId)
                 .orElseThrow(() -> new EntityNotFoundException("Build not found"));
         List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByBuildId(buildId);
@@ -128,8 +187,12 @@ public class BuildService {
     }
 
     public void deleteAllFromUser(Long userId){
-        List<Build> builds = buildRepo.findAllByCreatorId(userId);
-        List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
+        List<Build> builds = buildRepo.findAllByCreatorId(user.id());
+        List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(user.id());
 
         buildRepo.deleteAll(builds);
         likedBuildsRepo.deleteAll(likedBuilds);
