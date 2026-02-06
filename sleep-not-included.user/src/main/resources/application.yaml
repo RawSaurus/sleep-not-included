@@ -17,6 +17,12 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 sni:
   message: "test"
+logging:
+  level:
+    root: INFO
+    com.rawsaurus.sleep_not_included.user: TRACE
+  file:
+    name: logs/user.log
 server:
   port: 8081
   servlet:

@@ -5,8 +5,10 @@ import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.model.User;
 import com.rawsaurus.sleep_not_included.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,18 +20,18 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
+@Log
 public class UserController {
 
     private final UserService userService;
 
+    @Value("${sni.message}")
+    private String message;
+
     @GetMapping("/test")
     public String test(){
-        RestClient restClient = RestClient.create();
-        String res = restClient.get()
-                .uri("http://localhost:8082/api/v1/test-info")
-                .retrieve()
-                .body(String.class);
-        return res;
+        log.warning("test msg");
+        return message;
     }
 
     @GetMapping("/{userId}")
