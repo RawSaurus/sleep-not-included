@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: dev
+  config:
+    import: env.properties, optional:configserver:http://localhost:8888
+  application:
+    name: gateway
+
+server:
+  port: 8080
