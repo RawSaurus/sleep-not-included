@@ -93,7 +93,9 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - ./prometheus.yaml:/etc/prometheus.yaml
+    command:
+      - "--config.file=/etc/prometheus.yaml"
     networks:
       - loki
 

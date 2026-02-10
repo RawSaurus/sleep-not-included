@@ -9,5 +9,17 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: http://localhost:8761/eureka
-  instance:
-    appname: eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

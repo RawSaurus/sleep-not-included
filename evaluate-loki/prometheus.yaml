@@ -1,24 +1,46 @@
-#scrape_configs:
-#  - job_name: 'sleep-not-included-user'
-#    metrics_path: '/api/v1/actuator/prometheus'
-#    scrape_interval: 5s
-#    static_configs:
-#      - targets: ['host.docker.internal:8081']
-#        labels:
-#          application: 'sleep-not-included-user'
-#  - job_name: 'sleep-not-included-user'
-#    metrics_path: '/api/v1/actuator/prometheus'
-#    scrape_interval: 5s
-#    static_configs:
-#      - targets: ['host.docker.internal:8081']
-#        labels:
-#          application: 'sleep-not-included-user'
-
 scrape_configs:
-  - job_name: "eureka"
-    eureka_sd_configs:
-      - server: http://eureka:8761/eureka
+  - job_name: 'sleep-not-included-user'
+    metrics_path: '/api/v1/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          application: sln
+  - job_name: "sleep-not-included-build"
+    metrics_path: /api/v1/actuator/prometheus
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+        labels:
+          application: sln
+  - job_name: "gateway"
     metrics_path: /actuator/prometheus
-    relabel_configs:
-      - source_labels: [__meta_eureka_sleep_not_included]
-        target_label: application
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        - host.docker.internal:8080
+        labels:
+          application: sln
+
+#scrape_configs:
+#  - job_name: "spring-local"
+#    metrics_path: /actuator/prometheus
+#    scrape_interval: 5s
+#    static_configs:
+#      - targets:
+#        - host.docker.internal:8080
+#        - host.docker.internal:8081/api/v1
+#        - host.docker.internal:8082/api/v1
+
+#global:
+#  scrape_interval: 15s
+#  evaluation_interval: 15s
+#
+#scrape_configs:
+#  - job_name: "eureka"
+#    eureka_sd_configs:
+#      - server: http://host.docker.internal:8761/eureka
+#    metrics_path: /actuator/prometheus
+#    relabel_configs:
+#      - source_labels: [__meta_eureka_app_name]
+#        target_label: application
