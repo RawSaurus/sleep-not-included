@@ -18,10 +18,13 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
-    @Column(unique = true)
-    private String email;
-    private String password;
+    private String filename;
+//    change to enum
+    private String type;
+    private Double size;
+    private String storagePath;
+//    private String ownerService;
+    private Long ownerId;
 
     @CreatedDate
     @Column(updatable = false, nullable = false)

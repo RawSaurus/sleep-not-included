@@ -102,8 +102,25 @@ services:
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
+#    ports:
+#      - 9411:9411
+    environment:
+      - STORAGE_TYPE=mem
+      - ZIPKIN_COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    networks:
+      - loki
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command:
+      - "--config.file=/etc/tempo.yaml"
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+      - ./tempo-data:/var/tempo
     ports:
-      - 9411:9411
+      - "3200:3200"   # Grafana queries
+      - "9411:9411"   # Zipkin ingest
     networks:
       - loki
 

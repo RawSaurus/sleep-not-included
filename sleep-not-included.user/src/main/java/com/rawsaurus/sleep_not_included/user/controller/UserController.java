@@ -56,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findUsersByNameLike(username, pageable));
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request){
         return ResponseEntity.ok(userService.createUser(request));
     }

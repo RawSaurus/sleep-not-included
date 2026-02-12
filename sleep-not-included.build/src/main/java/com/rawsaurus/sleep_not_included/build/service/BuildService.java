@@ -103,7 +103,7 @@ public class BuildService {
                 .map(buildMapper::toResponse);
     }
 
-    public List<BuildResponse> findAllByLikes(Long userId){
+    public List<BuildResponse> findAllLikedBuilds(Long userId, Pageable pageable){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");

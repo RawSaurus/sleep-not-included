@@ -6,13 +6,18 @@ import com.rawsaurus.sleep_not_included.comment.dto.CommentRequest;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentResponse;
 import com.rawsaurus.sleep_not_included.comment.mapper.CommentMapper;
 import com.rawsaurus.sleep_not_included.comment.model.Comment;
+import com.rawsaurus.sleep_not_included.comment.model.CommentResponses;
+import com.rawsaurus.sleep_not_included.comment.model.LikedComments;
 import com.rawsaurus.sleep_not_included.comment.repo.CommentRepository;
+import com.rawsaurus.sleep_not_included.comment.repo.CommentResponsesRepository;
+import com.rawsaurus.sleep_not_included.comment.repo.LikedCommentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -20,6 +25,9 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepo;
+    private final CommentResponsesRepository comResRepo;
+    private final LikedCommentRepository likedComsRepo;
+
     private final CommentMapper commentMapper;
 
     private final UserClient userClient;
@@ -72,6 +80,49 @@ public class CommentService {
         return commentMapper.toResponse(
                 commentRepo.save(comment)
         );
+    }
+
+    public CommentResponse respond(Long userId, Long commentId, CommentRequest request){
+        Comment comment = commentRepo.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        var user = userClient.findUser(userId).getBody();
+        if(user == null){
+            throw new EntityNotFoundException("User not found");
+        }
+
+        var commentRespond = commentRepo.save(
+                commentMapper.toEntity(request)
+        );
+        var commentRespondLink = CommentResponses.builder()
+                .originalCommentId(comment.getId())
+                .responseId(commentRespond.getId())
+                .build();
+        comResRepo.save(commentRespondLink);
+
+        return commentMapper.toResponse(commentRespond);
+    }
+
+    public void likeComment(Long userId, Long commentId){
+        Comment comment = commentRepo.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        var user = userClient.findUser(userId).getBody();
+        if(user == null){
+            throw new EntityNotFoundException("User not found");
+        }
+        Optional<LikedComments> likedComment = likedComsRepo.findByUserIdAndCommentId(userId, commentId);
+
+        if(likedComment.isPresent()){
+            comment.setLikes(comment.getLikes() - 1);
+            likedComsRepo.delete(likedComment.get());
+        }else{
+            comment.setLikes(comment.getLikes() + 1);
+            LikedComments likedCommentsToSave = likedComsRepo.save(LikedComments.builder()
+                    .userId(userId)
+                    .commentId(commentId)
+                    .build());
+            likedComsRepo.save(likedCommentsToSave);
+        }
+        commentRepo.save(comment);
     }
 
     public CommentResponse updateComment(Long userId, Long buildId, Long id, CommentRequest request){

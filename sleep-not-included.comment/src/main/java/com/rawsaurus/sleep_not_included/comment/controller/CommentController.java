@@ -62,6 +62,24 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createComment(userId, buildId, request));
     }
 
+    @PostMapping("/{userId}/{commentId}")
+    public ResponseEntity<CommentResponse> respond(
+            @PathVariable Long userId,
+            @PathVariable Long commentId,
+            @RequestBody CommentRequest request
+    ){
+        return ResponseEntity.ok(commentService.respond(userId, commentId, request));
+    }
+
+    @PostMapping("/like/{userId}/{commentId}")
+    public ResponseEntity<?> likeComment(
+            @PathVariable Long userId,
+            @PathVariable Long commentId
+    ){
+        commentService.likeComment(userId, commentId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{userId}/{buildId}/{id}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long userId,

@@ -1,3 +1,5 @@
 .env
+/evaluate-loki/.data
+/evaluate-loki/tempo-data
 .idea
 logs
