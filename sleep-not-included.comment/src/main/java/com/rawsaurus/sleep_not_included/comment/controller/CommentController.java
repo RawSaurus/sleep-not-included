@@ -53,6 +53,18 @@ public class CommentController {
         return ResponseEntity.ok(commentService.findAllByUser(userId, pageable));
     }
 
+    @GetMapping("/responses/{commentId}")
+    public ResponseEntity<Page<CommentResponse>> findAllResponses(
+            @PathVariable Long commentId,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", defaultValue = "likes") String sortBy,
+            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+            ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return ResponseEntity.ok(commentService.findAllResponses(commentId, pageable));
+    }
+
     @PostMapping("/{userId}/{buildId}")
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable Long userId,
@@ -62,7 +74,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createComment(userId, buildId, request));
     }
 
-    @PostMapping("/{userId}/{commentId}")
+    @PostMapping("/respond/{userId}/{commentId}")
     public ResponseEntity<CommentResponse> respond(
             @PathVariable Long userId,
             @PathVariable Long commentId,

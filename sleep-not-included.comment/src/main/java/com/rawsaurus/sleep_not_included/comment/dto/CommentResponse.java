@@ -6,5 +6,7 @@ public record CommentResponse(
         Long id,
         String body,
         Integer likes,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        Integer numOfResponses
+) {
 }

@@ -6,16 +6,16 @@ import com.rawsaurus.sleep_not_included.comment.dto.CommentRequest;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentResponse;
 import com.rawsaurus.sleep_not_included.comment.mapper.CommentMapper;
 import com.rawsaurus.sleep_not_included.comment.model.Comment;
-import com.rawsaurus.sleep_not_included.comment.model.CommentResponses;
+//import com.rawsaurus.sleep_not_included.comment.model.CommentResponses;
 import com.rawsaurus.sleep_not_included.comment.model.LikedComments;
 import com.rawsaurus.sleep_not_included.comment.repo.CommentRepository;
-import com.rawsaurus.sleep_not_included.comment.repo.CommentResponsesRepository;
 import com.rawsaurus.sleep_not_included.comment.repo.LikedCommentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepo;
-    private final CommentResponsesRepository comResRepo;
     private final LikedCommentRepository likedComsRepo;
 
     private final CommentMapper commentMapper;
@@ -62,6 +61,13 @@ public class CommentService {
                 .map(commentMapper::toResponse);
     }
 
+    public Page<CommentResponse> findAllResponses(Long parentId, Pageable pageable){
+        Comment parent = commentRepo.findById(parentId)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        return commentRepo.findAllByParent(parent, pageable)
+                .map(commentMapper::toResponse);
+    }
+
     public CommentResponse createComment(Long userId, Long buildId, CommentRequest request){
         var user = userClient.findUser(userId).getBody();
         var build = buildClient.findById(buildId).getBody();
@@ -74,8 +80,10 @@ public class CommentService {
         }
 
         Comment comment = commentMapper.toEntity(request);
+
         comment.setUserId(user.id());
         comment.setBuildId(build.id());
+        comment.setOriginal(true);
 
         return commentMapper.toResponse(
                 commentRepo.save(comment)
@@ -90,14 +98,14 @@ public class CommentService {
             throw new EntityNotFoundException("User not found");
         }
 
-        var commentRespond = commentRepo.save(
-                commentMapper.toEntity(request)
-        );
-        var commentRespondLink = CommentResponses.builder()
-                .originalCommentId(comment.getId())
-                .responseId(commentRespond.getId())
-                .build();
-        comResRepo.save(commentRespondLink);
+        var commentResToSave = commentMapper.toEntity(request);
+        commentResToSave.setParent(comment);
+        commentResToSave.setUserId(user.id());
+        commentResToSave.setOriginal(false);
+
+        var commentRespond = commentRepo.save(commentResToSave);
+        comment.setNumOfResponses(comment.getNumOfResponses() + 1);
+        commentRepo.save(comment);
 
         return commentMapper.toResponse(commentRespond);
     }
@@ -146,10 +154,20 @@ public class CommentService {
         );
     }
 
+    //implement delete responses
+    @Transactional
     public String deleteComment(Long id){
         var comment = commentRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
 
+        if(!comment.isOriginal()){
+            var parent = commentRepo.findById(comment.getParent().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent comment not found"));
+
+            parent.setNumOfResponses(parent.getNumOfResponses() - 1);
+        }
+
+        commentRepo.deleteAllByParent(comment);
         commentRepo.delete(comment);
 
         return "Comment deleted";

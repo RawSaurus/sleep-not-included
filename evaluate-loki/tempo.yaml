@@ -2,18 +2,31 @@ auth_enabled: false
 
 server:
   http_listen_port: 3200
+  grpc_listen_port: 9095
+  grpc_server_max_recv_msg_size: 4000000
 
 distributor:
+  ring:
+    kvstore:
+      store: inmemory
   receivers:
     zipkin:
+      endpoint: 0.0.0.0:9411
 
 ingester:
   lifecycler:
     ring:
       kvstore:
         store: inmemory
-  trace_idle_period: 10s
-  max_block_duration: 5m
+      replication_factor: 3
+    num_tokens: 128
+    heartbeat_timeout: 5m
+
+multitenancy_enabled: false
+
+querier:
+  frontend_worker:
+    frontend_address: 127.0.0.1:9095
 
 storage:
   trace:
