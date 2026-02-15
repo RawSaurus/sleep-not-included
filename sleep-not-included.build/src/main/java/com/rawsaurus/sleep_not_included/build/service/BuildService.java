@@ -3,6 +3,7 @@ package com.rawsaurus.sleep_not_included.build.service;
 import com.rawsaurus.sleep_not_included.build.clients.TagClient;
 import com.rawsaurus.sleep_not_included.build.clients.UserClient;
 import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
+import com.rawsaurus.sleep_not_included.build.dto.BuildResLoggedIn;
 import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
 import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
 import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
@@ -12,15 +13,14 @@ import com.rawsaurus.sleep_not_included.build.repo.BuildRepository;
 import com.rawsaurus.sleep_not_included.build.repo.LikedBuildsRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -88,6 +88,31 @@ public class BuildService {
                 .map(buildMapper::toResponse);
     }
 
+    public Page<BuildResLoggedIn> findAllLoggedIn(Long userId, Pageable pageable){
+        var user = userClient.findUserById(userId).getBody();
+        if (user == null){
+            throw new EntityNotFoundException("User not found");
+        }
+
+        Page<Build> builds = buildRepo.findAll(pageable);
+        List<BuildResLoggedIn> res = new ArrayList<>();
+
+        for(Build b : builds.getContent()){
+            res.add(
+                    new BuildResLoggedIn(
+                            b.getId(),
+                            b.getName(),
+                            b.getDescription(),
+                            Collections.emptyList(),
+                            b.getCreatorId(),
+                            b.getLikes(),
+                            likedBuildsRepo.existsByUserIdAndBuildId(userId, b.getId())
+                    )
+            );
+        }
+        return new PageImpl<>(res);
+    }
+
     //rework
 //    public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
 //        return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
@@ -103,7 +128,7 @@ public class BuildService {
                 .map(buildMapper::toResponse);
     }
 
-    public List<BuildResponse> findAllLikedBuilds(Long userId, Pageable pageable){
+    public Page<BuildResponse> findAllLikedBuilds(Long userId, Pageable pageable){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");
@@ -118,7 +143,17 @@ public class BuildService {
                     )
             );
         }
-        return builds;
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), builds.size());
+
+        if (start >= builds.size()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, builds.size());
+        }
+
+        return new PageImpl<BuildResponse>(
+                builds.subList(start, end), pageable, builds.size()
+        );
     }
 
     public BuildResponse createBuild(Long creatorId, BuildRequest request){
@@ -128,7 +163,6 @@ public class BuildService {
         }
         Build build = buildMapper.toEntity(request);
         build.setCreatorId(user.id());
-        build.setLikes(1);
         var res = buildMapper.toResponse(buildRepo.save(build));
         if(!request.tagId().isEmpty()) {
             tagClient.addTagsToBuild(res.id(), request.tagId());
@@ -174,6 +208,7 @@ public class BuildService {
         return buildMapper.toResponse(buildRepo.save(build));
     }
 
+    @Transient
     public String deleteBuild(Long userId, Long buildId){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
@@ -189,6 +224,7 @@ public class BuildService {
         return "Build deleted successfully";
     }
 
+    @Transient
     public void deleteAllFromUser(Long userId){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){

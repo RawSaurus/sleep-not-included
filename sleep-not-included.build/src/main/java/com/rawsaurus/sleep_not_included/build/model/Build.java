@@ -23,10 +23,9 @@ public class Build {
     private Long id;
     private String name;
     private String description;
-    private Integer likes;
+    private int likes;
 
     private Long creatorId;
-
 
     @CreatedDate
     @Column(updatable = false, nullable = false)

@@ -4,6 +4,7 @@ package com.rawsaurus.sleep_not_included.comment.controller;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentRequest;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentResponse;
 import com.rawsaurus.sleep_not_included.comment.service.CommentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -69,7 +70,7 @@ public class CommentController {
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable Long userId,
             @PathVariable Long buildId,
-            @RequestBody CommentRequest request
+            @Valid @RequestBody CommentRequest request
             ){
         return ResponseEntity.ok(commentService.createComment(userId, buildId, request));
     }
@@ -78,7 +79,7 @@ public class CommentController {
     public ResponseEntity<CommentResponse> respond(
             @PathVariable Long userId,
             @PathVariable Long commentId,
-            @RequestBody CommentRequest request
+            @Valid @RequestBody CommentRequest request
     ){
         return ResponseEntity.ok(commentService.respond(userId, commentId, request));
     }
@@ -97,7 +98,7 @@ public class CommentController {
             @PathVariable Long userId,
             @PathVariable Long buildId,
             @PathVariable Long id,
-            @RequestBody CommentRequest request
+            @Valid @RequestBody CommentRequest request
     ){
         return ResponseEntity.ok(commentService.updateComment(userId, buildId, id, request));
     }

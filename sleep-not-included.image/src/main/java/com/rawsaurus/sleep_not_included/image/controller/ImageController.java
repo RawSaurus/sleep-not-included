@@ -3,8 +3,12 @@ package com.rawsaurus.sleep_not_included.image.controller;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
 import com.rawsaurus.sleep_not_included.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
 @RestController

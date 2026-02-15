@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface LikedBuildsRepository extends JpaRepository<LikedBuilds, Long> {
 
+    boolean existsByUserIdAndBuildId(Long userId, Long buildId);
+
     Optional<LikedBuilds> findByUserIdAndBuildId(Long userId, Long buildId);
     List<LikedBuilds> findAllByUserId(Long userId);
     List<LikedBuilds> findAllByBuildId(Long buildId);

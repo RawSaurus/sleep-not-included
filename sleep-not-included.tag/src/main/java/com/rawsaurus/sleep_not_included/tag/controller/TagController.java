@@ -6,6 +6,7 @@ import com.rawsaurus.sleep_not_included.tag.model.BuildTags;
 import com.rawsaurus.sleep_not_included.tag.model.Tag;
 import com.rawsaurus.sleep_not_included.tag.model.Type;
 import com.rawsaurus.sleep_not_included.tag.service.TagService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -57,7 +58,7 @@ public class TagController {
     }
 
     @PostMapping
-    public ResponseEntity<TagResponse> createTag(@RequestBody TagRequest request){
+    public ResponseEntity<TagResponse> createTag(@Valid @RequestBody TagRequest request){
         return ResponseEntity.ok(tagService.createTag(request));
     }
 
@@ -68,7 +69,7 @@ public class TagController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TagResponse> updateTag(@PathVariable Long id, @RequestBody TagRequest request){
+    public ResponseEntity<TagResponse> updateTag(@PathVariable Long id, @Valid @RequestBody TagRequest request){
         return ResponseEntity.ok(tagService.updateTag(id, request));
     }
 

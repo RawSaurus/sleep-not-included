@@ -1,8 +1,10 @@
 package com.rawsaurus.sleep_not_included.build.controller;
 
 import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
+import com.rawsaurus.sleep_not_included.build.dto.BuildResLoggedIn;
 import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
 import com.rawsaurus.sleep_not_included.build.service.BuildService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +54,17 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAll(pageable));
     }
 
+    @GetMapping("/logged/{userId}")
+    public ResponseEntity<Page<BuildResLoggedIn>> findAllLoggedIn(
+            @PathVariable Long userId,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+    ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return ResponseEntity.ok(buildService.findAllLoggedIn(userId, pageable));
+    }
 //    @GetMapping("/filters")
 //    public ResponseEntity<Page<BuildResponse>> findAllWithFilters(
 //            @RequestBody Set<Long> tags,  // temp type
@@ -78,7 +91,7 @@ public class BuildController {
     }
 
     @GetMapping("/liked/{userId}")
-    public ResponseEntity<List<BuildResponse>> findAllLikedBuilds(
+    public ResponseEntity<Page<BuildResponse>> findAllLikedBuilds(
             @PathVariable Long userId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
@@ -90,7 +103,7 @@ public class BuildController {
     }
 
     @PostMapping("/{userId}")
-    public ResponseEntity<BuildResponse> createBuild(@PathVariable Long userId, @RequestBody BuildRequest request){
+    public ResponseEntity<BuildResponse> createBuild(@PathVariable Long userId, @Valid @RequestBody BuildRequest request){
         return ResponseEntity.ok(buildService.createBuild(userId, request));
     }
 
@@ -101,7 +114,7 @@ public class BuildController {
     }
 
     @PutMapping("/{userId}/{buildId}")
-    public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long userId, @PathVariable Long buildId, @RequestBody BuildRequest request){
+    public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long userId, @PathVariable Long buildId, @Valid @RequestBody BuildRequest request){
         return ResponseEntity.ok(buildService.updateBuild(userId, buildId, request));
     }
 

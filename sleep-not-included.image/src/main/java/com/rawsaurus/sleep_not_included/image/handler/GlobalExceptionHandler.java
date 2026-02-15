@@ -51,6 +51,17 @@ public class GlobalExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<ExceptionResponse> handleException(StorageException exp){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .businessErrorCode(STORAGE_ERROR.getCode())
+                                .error(exp.getMessage())
+                                .build()
+                );
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ExceptionResponse> handleException(EntityNotFoundException exp){
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

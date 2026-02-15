@@ -4,6 +4,7 @@ import com.rawsaurus.sleep_not_included.user.dto.UserRequest;
 import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.model.User;
 import com.rawsaurus.sleep_not_included.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,14 +58,14 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request){
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request){
         return ResponseEntity.ok(userService.createUser(request));
     }
 
     @PutMapping("/{userId}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long userId,
-            @RequestBody UserRequest request
+            @Valid @RequestBody UserRequest request
     ){
         return ResponseEntity.ok(userService.updateUser(userId, request));
     }

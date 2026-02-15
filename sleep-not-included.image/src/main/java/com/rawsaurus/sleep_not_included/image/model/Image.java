@@ -21,7 +21,7 @@ public class Image {
     private String filename;
 //    change to enum
     private String type;
-    private Double size;
+    private long size;
     private String storagePath;
 //    private String ownerService;
     private Long ownerId;

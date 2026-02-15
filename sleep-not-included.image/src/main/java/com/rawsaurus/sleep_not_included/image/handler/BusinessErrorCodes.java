@@ -16,7 +16,8 @@ public enum BusinessErrorCodes {
     ACTION_NOT_ALLOWED(400, BAD_REQUEST, "Action is not allowed"),
     VALIDATION_FAILURE(400, BAD_REQUEST, "Validation failure"),
     ACCESS_DENIED(401, UNAUTHORIZED, "You do not have permission for this action"),
-    ENTITY_NOT_FOUND(404, NOT_FOUND, "Entity not found")
+    ENTITY_NOT_FOUND(404, NOT_FOUND, "Entity not found"),
+    STORAGE_ERROR(400, BAD_REQUEST, "There was problem with storage")
     ;
 
     @Getter
