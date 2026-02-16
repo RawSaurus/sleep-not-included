@@ -27,4 +27,14 @@ public class ImageController {
         return ResponseEntity.ok(imageService.findByOwnerId(ownerId));
     }
 
+    @GetMapping("/download/{filename}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String filename){
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.download(filename));
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam MultipartFile file){
+        return ResponseEntity.ok(imageService.upload(file));
+    }
+
 }

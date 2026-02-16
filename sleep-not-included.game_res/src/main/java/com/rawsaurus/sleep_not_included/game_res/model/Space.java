@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class GameRes {
+public class Space {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

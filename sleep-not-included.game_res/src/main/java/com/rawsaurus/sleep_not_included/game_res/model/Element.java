@@ -15,12 +15,15 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class GameRes {
+public class Element {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
+    private State state;
     private String description;
     private String image;
 

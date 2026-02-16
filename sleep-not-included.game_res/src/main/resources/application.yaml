@@ -4,7 +4,7 @@ spring:
   config:
     import: env.properties, optional:configserver:http://localhost:8888
   application:
-    name: sleep-not-included-gameres
+    name: sleep-not-included-game_res
   datasource:
     url: jdbc:postgresql://localhost:5432/sleep-not-included-gameres
     username: ${PSQL_USERNAME}

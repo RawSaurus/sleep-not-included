@@ -42,4 +42,12 @@ public class FallbackController {
                         .body("Build service unavailable")
         );
     }
+
+    @GetMapping("/gameres")
+    public Mono<ResponseEntity<String>> gameresFallback(){
+        return Mono.just(
+                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body("Resource service unavailable")
+        );
+    }
 }
