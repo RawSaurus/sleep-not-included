@@ -50,4 +50,12 @@ public class FallbackController {
                         .body("Resource service unavailable")
         );
     }
+
+    @GetMapping("/image")
+    public Mono<ResponseEntity<String>> imageFallback(){
+        return Mono.just(
+                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body("Image service unavailable")
+        );
+    }
 }

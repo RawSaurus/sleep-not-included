@@ -1,6 +1,7 @@
 package com.rawsaurus.sleep_not_included.build.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -14,7 +15,7 @@ public record BuildRequest(
         @Size(max = 1000, message = "Description can't be longer than 1000 characters")
         String description,
         List<Long> tagId,
-        @NotBlank(message = "creator can't be blank")
+        @NotNull
         Long creatorId
 ) {
 }

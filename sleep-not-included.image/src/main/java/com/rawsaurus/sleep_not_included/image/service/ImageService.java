@@ -1,9 +1,13 @@
 package com.rawsaurus.sleep_not_included.image.service;
 
+import com.rawsaurus.sleep_not_included.image.client.BuildClient;
+import com.rawsaurus.sleep_not_included.image.client.UserClient;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
+import com.rawsaurus.sleep_not_included.image.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.image.handler.StorageException;
 import com.rawsaurus.sleep_not_included.image.mapper.ImageMapper;
 import com.rawsaurus.sleep_not_included.image.model.Image;
+import com.rawsaurus.sleep_not_included.image.model.ImageType;
 import com.rawsaurus.sleep_not_included.image.repo.ImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,20 +29,31 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 
+import static com.rawsaurus.sleep_not_included.image.model.ImageType.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Service
 public class ImageService {
 
     private static final int FILE_CODE_LENGTH = 8;
-    private final Path rootLocation = Paths.get("./sleep-not-included.image/Files-Upload");
+    private static final Path ROOT_LOCATION = Paths.get("./sleep-not-included.image/Files-Upload");
+    private static final Path USER_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/user");
+    private static final Path BUILD_THUMBNAIL_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/build-thumb");
+    private static final Path BUILD_IMAGE_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/build");
+    private static final Path RES_IMAGE_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/res");
 
     private final ImageRepository imageRepo;
+
     private final ImageMapper imageMapper;
 
-    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper) {
+    private final UserClient userClient;
+    private final BuildClient buildClient;
+
+    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient) {
         this.imageRepo= imageRepo;
         this.imageMapper = imageMapper;
+        this.userClient = userClient;
+        this.buildClient = buildClient;
         createDir();
     }
 
@@ -52,7 +67,52 @@ public class ImageService {
 
     public Resource download(String filename){
         try{
-            Path filePath = rootLocation.resolve(filename).normalize();
+            Path filePath = ROOT_LOCATION.resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if(resource.exists()){
+                return resource;
+            }else{
+                throw new StorageException("File could not be read");
+            }
+        } catch(Exception e){
+            throw new StorageException("File could not be read");
+        }
+    }
+
+    public Resource downloadProfilePic(Long id){
+        var user = userClient.findUserById(id).getBody();
+        if(user == null){
+            throw new EntityNotFoundException("Build not found");
+        }
+
+        Image image = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id())
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+
+        try{
+            Path filePath = USER_LOCATION.resolve(image.getId().toString()).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if(resource.exists()){
+                return resource;
+            }else{
+                throw new StorageException("File could not be read");
+            }
+        } catch(Exception e){
+            throw new StorageException("File could not be read");
+        }
+
+    }
+
+    public Resource downloadBuildThumbnail(Long id){
+        var build = buildClient.findById(id).getBody();
+        if(build == null){
+            throw new EntityNotFoundException("Build not found");
+        }
+
+        Image image = imageRepo.findImageByStoragePathAndOwnerId(BUILD_THUMBNAIL_LOCATION.toString(), build.id())
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+
+        try{
+            Path filePath = BUILD_THUMBNAIL_LOCATION.resolve(image.getId().toString()).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()){
                 return resource;
@@ -69,7 +129,7 @@ public class ImageService {
             throw new StorageException("Wrong content type");
         }
         try (InputStream input = file.getInputStream()){
-            Path path = rootLocation.resolve(file.getName());
+            Path path = ROOT_LOCATION.resolve(file.getName());
             Files.copy(input, path, REPLACE_EXISTING);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
@@ -77,28 +137,89 @@ public class ImageService {
         return "File stored successfully";
     }
 
+    @Transactional
+    public String uploadProfilePic(MultipartFile file, String name){
+        var user = userClient.findUserByName(name).getBody();
+        if(user == null){
+            throw new EntityNotFoundException("Build not found");
+        }
 
+        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id());
+
+        if(checkImage.isPresent()){
+            throw new ActionNotAllowed("Image already exists");
+        }
+
+        Image imageToSave = Image.builder()
+                .filename(file.getOriginalFilename())
+                .type(PROFILE_PIC)
+                .size(file.getSize())
+                .storagePath(USER_LOCATION.toString())
+                .ownerService("user")
+                .ownerId(user.id())
+                .build();
+
+        Image image = imageRepo.save(imageToSave);
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+        try (InputStream input = file.getInputStream()){
+            Path path = USER_LOCATION.resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
+    @Transactional
+    public String uploadBuildThumbnail(MultipartFile file, String name){
+        var build = buildClient.findByName(name).getBody();
+        if(build == null){
+            throw new EntityNotFoundException("Build not found");
+        }
+
+        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(BUILD_THUMBNAIL_LOCATION.toString(), build.id());
+
+        if(checkImage.isPresent()){
+            throw new ActionNotAllowed("Image already exists");
+        }
+
+        Image imageToSave = Image.builder()
+                .filename(file.getOriginalFilename())
+                .type(BUILD_THUMBNAIL)
+                .size(file.getSize())
+                .storagePath(BUILD_THUMBNAIL_LOCATION.toString())
+                .ownerService("build")
+                .ownerId(build.id())
+                .build();
+
+        Image image = imageRepo.save(imageToSave);
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+        try (InputStream input = file.getInputStream()){
+            Path path = BUILD_THUMBNAIL_LOCATION.resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
 
     private void createDir(){
         try {
-            if(!Files.exists(rootLocation)) {
-                Files.createDirectory(rootLocation);
+            if(!Files.exists(ROOT_LOCATION)) {
+                Files.createDirectory(ROOT_LOCATION);
+                Files.createDirectory(USER_LOCATION);
+                Files.createDirectory(BUILD_IMAGE_LOCATION);
+                Files.createDirectory(BUILD_THUMBNAIL_LOCATION);
+                Files.createDirectory(RES_IMAGE_LOCATION);
             }
         } catch (IOException e) {
-            throw new StorageException("Could not create directory " + rootLocation);
+            throw new StorageException("Could not create directory " + ROOT_LOCATION);
         }
-    }
-
-    private String randomAlphaNumeric(){
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for(int i = 0; i<FILE_CODE_LENGTH;){
-            int next = random.nextInt(48, 126);
-            if((next >= 48 && next <= 57) || (next >= 65 && next <= 90) || (next >= 97 && next <= 122)) {
-                sb.append((char)next);
-                i++;
-            }
-        }
-        return sb.toString();
     }
 }

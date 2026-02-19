@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -13,17 +14,19 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String filename;
-//    change to enum
-    private String type;
+    @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
+    private ImageType type;
     private long size;
     private String storagePath;
-//    private String ownerService;
+    private String ownerService;
     private Long ownerId;
 
     @CreatedDate
