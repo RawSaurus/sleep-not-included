@@ -19,7 +19,7 @@
         <module name="config-management" />
         <module name="eureka" />
       </profile>
-      <profile name="Annotation profile for sleep-not-included.game_res" enabled="true">
+      <profile name="Annotation profile for sleep-not-included.user" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />

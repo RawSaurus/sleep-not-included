@@ -1,33 +1,29 @@
 package com.rawsaurus.sleep_not_included.image.service;
 
 import com.rawsaurus.sleep_not_included.image.client.BuildClient;
+import com.rawsaurus.sleep_not_included.image.client.GameResClient;
 import com.rawsaurus.sleep_not_included.image.client.UserClient;
+import com.rawsaurus.sleep_not_included.image.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
 import com.rawsaurus.sleep_not_included.image.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.image.handler.StorageException;
 import com.rawsaurus.sleep_not_included.image.mapper.ImageMapper;
 import com.rawsaurus.sleep_not_included.image.model.Image;
-import com.rawsaurus.sleep_not_included.image.model.ImageType;
 import com.rawsaurus.sleep_not_included.image.repo.ImageRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Random;
 
 import static com.rawsaurus.sleep_not_included.image.model.ImageType.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -35,7 +31,10 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 @Service
 public class ImageService {
 
-    private static final int FILE_CODE_LENGTH = 8;
+    private static final String queueName = "image.entity.deleted.queue";
+    private String exchangeName = "entity.events";
+    private String routingKey = "entity.deleted";
+
     private static final Path ROOT_LOCATION = Paths.get("./sleep-not-included.image/Files-Upload");
     private static final Path USER_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/user");
     private static final Path BUILD_THUMBNAIL_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/build-thumb");
@@ -48,17 +47,22 @@ public class ImageService {
 
     private final UserClient userClient;
     private final BuildClient buildClient;
+    private final GameResClient resClient;
 
-    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient) {
+    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient, GameResClient resClient) {
         this.imageRepo= imageRepo;
         this.imageMapper = imageMapper;
         this.userClient = userClient;
         this.buildClient = buildClient;
+        this.resClient = resClient;
         createDir();
     }
 
     public ImageResponse findById(Long id){
-        return null;
+        return imageMapper.toResponse(
+                imageRepo.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Image not found"))
+        );
     }
 
     public ImageResponse findByOwnerId(Long ownerId){
@@ -207,6 +211,110 @@ public class ImageService {
             throw new StorageException(e.getMessage());
         }
         return "File stored successfully";
+    }
+
+    @Transactional
+    public String uploadBuildImages(MultipartFile file, String name){
+        var build = buildClient.findByName(name).getBody();
+        if(build == null){
+            throw new EntityNotFoundException("Build not found");
+        }
+
+        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(BUILD_IMAGE_LOCATION.toString(), build.id());
+
+        if(checkImage.isPresent()){
+            throw new ActionNotAllowed("Image already exists");
+        }
+
+        Image imageToSave = Image.builder()
+                .filename(file.getOriginalFilename())
+                .type(BUILD_IMAGE)
+                .size(file.getSize())
+                .storagePath(BUILD_IMAGE_LOCATION.toString())
+                .ownerService("build")
+                .ownerId(build.id())
+                .build();
+
+        Image image = imageRepo.save(imageToSave);
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+        try (InputStream input = file.getInputStream()){
+            Path path = BUILD_IMAGE_LOCATION.resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
+    @Transactional
+    public String uploadResImage(MultipartFile file, String name){
+        var gameres = resClient.findByName(name).getBody();
+        if(gameres == null){
+            throw new EntityNotFoundException("Build not found");
+        }
+
+        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(RES_IMAGE_LOCATION.toString(), gameres.id());
+
+        if(checkImage.isPresent()){
+            throw new ActionNotAllowed("Image already exists");
+        }
+
+        Image imageToSave = Image.builder()
+                .filename(file.getOriginalFilename())
+                .type(RES_IMAGE)
+                .size(file.getSize())
+                .storagePath(RES_IMAGE_LOCATION.toString())
+                .ownerService("gameres")
+                .ownerId(gameres.id())
+                .build();
+
+        Image image = imageRepo.save(imageToSave);
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+        try (InputStream input = file.getInputStream()){
+            Path path = RES_IMAGE_LOCATION.resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
+    @RabbitListener(queues = queueName)
+    @Transactional
+    public void deleteFile(DeleteEntityEvent event){
+        List<Image> imgsToDelete = imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerId(event.serviceName(), event.id());
+
+        imageRepo.deleteAll(imgsToDelete);
+
+        try {
+            switch (event.serviceName().toLowerCase()) {
+                case "user" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(USER_LOCATION.resolve(i.getId().toString()));
+                    }
+                }
+                case "build" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(BUILD_THUMBNAIL_LOCATION.resolve(i.getId().toString()));
+                        Files.deleteIfExists(BUILD_IMAGE_LOCATION.resolve(i.getId().toString()));
+                    }
+                }
+                case "res" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(RES_IMAGE_LOCATION.resolve(i.getId().toString()));
+                    }
+                }
+                default -> throw new StorageException("Wrong service name");
+            }
+        } catch (IOException e){
+            throw new StorageException("File wasn't found", e.getCause());
+        }
     }
 
     private void createDir(){

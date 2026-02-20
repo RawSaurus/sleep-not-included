@@ -1,5 +1,6 @@
 package com.rawsaurus.sleep_not_included.user.service;
 
+import com.rawsaurus.sleep_not_included.user.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.user.dto.UserRequest;
 import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.mapper.UserMapper;
@@ -7,16 +8,25 @@ import com.rawsaurus.sleep_not_included.user.model.User;
 import com.rawsaurus.sleep_not_included.user.repo.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
 public class UserService {
 
+    private String queueName = "image.entity.deleted.queue";
+    private String exchangeName = "entity.events";
+    private String routingKey = "entity.deleted";
+
     private final UserRepository userRepo;
+
     private final UserMapper userMapper;
+
+    private final RabbitTemplate rabbitTemplate;
 
     public UserResponse findUser(Long userId){
         return userMapper.toResponse(
@@ -55,6 +65,7 @@ public class UserService {
         return userMapper.toResponse(userRepo.save(user));
     }
 
+    @Transactional
     public String deleteUser(Long userId){
         //check for user
         User user = userRepo.findById(userId)
@@ -63,6 +74,8 @@ public class UserService {
         //delete related entities
 
         userRepo.delete(user);
+        rabbitTemplate.convertAndSend(exchangeName, routingKey,
+                new DeleteEntityEvent("USER", userId));
 
         return "User deleted successfully";
     }

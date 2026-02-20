@@ -30,7 +30,7 @@ public class ImageController {
         return ResponseEntity.ok(imageService.findById(id));
     }
 
-    @GetMapping("/{ownerId}")
+    @GetMapping("/owner/{ownerId}")
     public ResponseEntity<ImageResponse> findByOwnerId(@PathVariable Long ownerId){
         return ResponseEntity.ok(imageService.findByOwnerId(ownerId));
     }

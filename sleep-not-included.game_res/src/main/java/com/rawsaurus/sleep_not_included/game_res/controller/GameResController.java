@@ -28,6 +28,11 @@ public class GameResController {
         return ResponseEntity.ok(gameResService.findById(id));
     }
 
+    @GetMapping("/name/{name}")
+    public ResponseEntity<GameResResponse> findByName(@PathVariable String name){
+        return ResponseEntity.ok(gameResService.findByName(name));
+    }
+
     @PostMapping
     public ResponseEntity<GameResResponse> createRes(@RequestBody GameResRequest request){
         return ResponseEntity.ok(gameResService.createRes(request));

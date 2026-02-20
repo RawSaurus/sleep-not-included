@@ -24,6 +24,13 @@ public class GameResService {
         );
     }
 
+    public GameResResponse findByName(String name){
+        return gameResMapper.toResponse(
+                gameResRepo.findByName(name)
+                        .orElseThrow(() -> new EntityNotFoundException("Res not found"))
+        );
+    }
+
     public GameResResponse createRes(GameResRequest request){
         return gameResMapper.toResponse(
                 gameResRepo.save(

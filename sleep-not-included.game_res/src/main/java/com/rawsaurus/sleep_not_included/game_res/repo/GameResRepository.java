@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface GameResRepository extends JpaRepository<GameRes, Long> {
 
+    Optional<GameRes> findByName(String name);
 }

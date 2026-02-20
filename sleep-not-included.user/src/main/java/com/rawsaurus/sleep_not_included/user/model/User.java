@@ -28,8 +28,6 @@ public class User {
     private String email;
     private String password;
 
-    private String profilePicUrl;
-
     @CreatedDate
     @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
