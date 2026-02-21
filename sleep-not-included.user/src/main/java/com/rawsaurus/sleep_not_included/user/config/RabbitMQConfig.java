@@ -30,6 +30,13 @@ public class RabbitMQConfig {
                 .build();
     }
 
+    @Bean FanoutExchange fanoutExchange(){
+        return ExchangeBuilder
+                .fanoutExchange(exchangeName)
+                .durable(true)
+                .build();
+    }
+
     @Bean
     public Binding binding(){
         return BindingBuilder

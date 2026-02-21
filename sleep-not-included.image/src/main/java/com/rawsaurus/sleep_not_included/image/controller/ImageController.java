@@ -1,6 +1,7 @@
 package com.rawsaurus.sleep_not_included.image.controller;
 
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
+import com.rawsaurus.sleep_not_included.image.model.ImageType;
 import com.rawsaurus.sleep_not_included.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,15 @@ public class ImageController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam MultipartFile file){
         return ResponseEntity.ok(imageService.upload(file));
+    }
+
+    @PostMapping("/upload/test/{name}")
+    public ResponseEntity<?> uploadTest(
+            @RequestParam MultipartFile file,
+            @RequestParam ImageType type,
+            @PathVariable String name
+    ){
+        return ResponseEntity.ok(imageService.testUpload(file, type, name));
     }
 
     @PostMapping("/upload/profile/{name}")

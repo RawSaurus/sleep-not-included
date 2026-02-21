@@ -5,10 +5,12 @@ import com.rawsaurus.sleep_not_included.image.client.GameResClient;
 import com.rawsaurus.sleep_not_included.image.client.UserClient;
 import com.rawsaurus.sleep_not_included.image.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
+import com.rawsaurus.sleep_not_included.image.dto.OwnerData;
 import com.rawsaurus.sleep_not_included.image.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.image.handler.StorageException;
 import com.rawsaurus.sleep_not_included.image.mapper.ImageMapper;
 import com.rawsaurus.sleep_not_included.image.model.Image;
+import com.rawsaurus.sleep_not_included.image.model.ImageType;
 import com.rawsaurus.sleep_not_included.image.repo.ImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -141,11 +143,12 @@ public class ImageService {
         return "File stored successfully";
     }
 
+
     @Transactional
     public String uploadProfilePic(MultipartFile file, String name){
         var user = userClient.findUserByName(name).getBody();
         if(user == null){
-            throw new EntityNotFoundException("Build not found");
+            throw new EntityNotFoundException("User not found");
         }
 
         var checkImage = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id());
@@ -285,6 +288,37 @@ public class ImageService {
         return "File stored successfully";
     }
 
+    @Transactional
+    public String updateImage(MultipartFile file, ImageType type, String name){
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+
+        OwnerData ownerData = checkOwner(type, name);
+
+        Image imageToSave = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id())
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+
+        imageToSave.setFilename(file.getOriginalFilename());
+        imageToSave.setType(type);
+        imageToSave.setSize(file.getSize());
+        imageToSave.setStoragePath(ownerData.location().toString());
+        imageToSave.setOwnerService(ownerData.ownerService());
+        imageToSave.setOwnerId(ownerData.id());
+
+        Image image = imageRepo.save(imageToSave);
+
+
+        try (InputStream input = file.getInputStream()){
+            Path path = ownerData.location().resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
     @RabbitListener(queues = queueName)
     @Transactional
     public void deleteFile(DeleteEntityEvent event){
@@ -329,5 +363,72 @@ public class ImageService {
         } catch (IOException e) {
             throw new StorageException("Could not create directory " + ROOT_LOCATION);
         }
+    }
+
+    @Transactional
+    public String testUpload(MultipartFile file, ImageType type, String name){
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+
+        OwnerData ownerData = checkOwner(type, name);
+
+        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id());
+
+        if(checkImage.isPresent()){
+            throw new ActionNotAllowed("Image already exists");
+        }
+
+        Image imageToSave = Image.builder()
+                .filename(file.getOriginalFilename())
+                .type(type)
+                .size(file.getSize())
+                .storagePath(ownerData.location().toString())
+                .ownerService(ownerData.ownerService())
+                .ownerId(ownerData.id())
+                .build();
+
+        Image image = imageRepo.save(imageToSave);
+
+        try (InputStream input = file.getInputStream()){
+            Path path = ownerData.location().resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
+    private OwnerData checkOwner(ImageType type, String name){
+        OwnerData ownerData;
+        switch(type){
+            case PROFILE_PIC -> {
+                var user = userClient.findUserByName(name).getBody();
+                if(user == null){
+                    throw new EntityNotFoundException("User not found");
+                }
+                ownerData = new OwnerData(user.id(), user.username(), "user", USER_LOCATION);
+            }
+            case RES_IMAGE -> {
+                var gameres = resClient.findByName(name).getBody();
+                if(gameres == null){
+                    throw new EntityNotFoundException("Build not found");
+                }
+                ownerData = new OwnerData(gameres.id(), gameres.name(), "gameres", RES_IMAGE_LOCATION);
+            }
+            case BUILD_IMAGE, BUILD_THUMBNAIL -> {
+                var build = buildClient.findByName(name).getBody();
+                if(build == null){
+                    throw new EntityNotFoundException("Build not found");
+                }
+                if(type == BUILD_IMAGE){
+                    ownerData = new OwnerData(build.id(), build.name(), "build", BUILD_IMAGE_LOCATION);
+                }else{
+                    ownerData = new OwnerData(build.id(), build.name(), "build", BUILD_THUMBNAIL_LOCATION);
+                }
+            }
+            default -> throw new ActionNotAllowed("Owner of image couldn't be located");
+        }
+        return ownerData;
     }
 }
