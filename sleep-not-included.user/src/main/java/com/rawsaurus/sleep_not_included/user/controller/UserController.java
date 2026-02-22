@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
@@ -47,14 +49,8 @@ public class UserController {
 
     //probably hardcode pageable values
     @GetMapping("/search/{username}")
-    public ResponseEntity<Page<UserResponse>> findUsersByNameLike(
-            @PathVariable String username,
-            @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", defaultValue = "username") String sortBy,
-            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection){
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-        return ResponseEntity.ok(userService.findUsersByNameLike(username, pageable));
+    public ResponseEntity<List<UserResponse>> findUsersByNameLike( @PathVariable String username){
+        return ResponseEntity.ok(userService.findUsersByNameLike(username));
     }
 
     @PostMapping("/create")

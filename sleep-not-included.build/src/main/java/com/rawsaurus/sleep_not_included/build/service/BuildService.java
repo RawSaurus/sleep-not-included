@@ -6,8 +6,10 @@ import com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.build.dto.*;
 import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
 import com.rawsaurus.sleep_not_included.build.model.Build;
+import com.rawsaurus.sleep_not_included.build.model.BuildTags;
 import com.rawsaurus.sleep_not_included.build.model.LikedBuilds;
 import com.rawsaurus.sleep_not_included.build.repo.BuildRepository;
+import com.rawsaurus.sleep_not_included.build.repo.BuildTagsRepository;
 import com.rawsaurus.sleep_not_included.build.repo.LikedBuildsRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class BuildService {
 
     private final BuildRepository buildRepo;
     private final LikedBuildsRepository likedBuildsRepo;
+    private final BuildTagsRepository buildTagsRepo;
 
     private final UserClient userClient;
     private final TagClient tagClient;
@@ -77,10 +80,12 @@ public class BuildService {
         );
     }
 
-    public Page<BuildResponse> suggestSearch(String name){
+    public List<BuildResponse> suggestSearch(String name){
         Pageable pageable = PageRequest.of(0, 5);
-        return buildRepo.findAllByNameLikeIgnoreCase(name, pageable)
-                .map(buildMapper::toResponse);
+        return buildRepo.searchBuilds(name, pageable)
+                .stream()
+                .map(buildMapper::toResponse)
+                .toList();
     }
 
     public Page<BuildResponse> findAll(Pageable pageable){
@@ -103,7 +108,6 @@ public class BuildService {
                             b.getId(),
                             b.getName(),
                             b.getDescription(),
-                            Collections.emptyList(),
                             b.getCreatorId(),
                             b.getLikes(),
                             likedBuildsRepo.existsByUserIdAndBuildId(userId, b.getId())
@@ -165,10 +169,20 @@ public class BuildService {
         build.setCreatorId(user.id());
         var res = buildMapper.toResponse(buildRepo.save(build));
         if(!request.tagId().isEmpty()) {
-            tagClient.addTagsToBuild(res.id(), request.tagId());
+            addTagsToBuild(res.id(), request.tagId());
         }
-
         return res;
+    }
+
+    public void addTagsToBuild(Long buildId, List<Long> tagIds){
+        //check tags?
+        for(Long id : tagIds){
+            BuildTags b = BuildTags.builder()
+                    .buildId(buildId)
+                    .tagId(id)
+                    .build();
+            buildTagsRepo.save(b);
+        }
     }
 
     public void likeBuild(Long userId, Long buildId){
@@ -195,6 +209,7 @@ public class BuildService {
         buildRepo.save(build);
     }
 
+    @Transactional
     public BuildResponse updateBuild(Long userId, Long buildId, BuildRequest request){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
@@ -205,13 +220,19 @@ public class BuildService {
 
         buildMapper.updateToEntity(request, build);
 
+        //try come up with better impl
+        if(!request.tagId().isEmpty()) {
+            buildTagsRepo.deleteAllByBuildId(build.getId());
+            addTagsToBuild(build.getId(), request.tagId());
+        }
+
         return buildMapper.toResponse(buildRepo.save(build));
     }
 
-    @Transient
+    @Transactional
     public String deleteBuild(Long userId, Long buildId){
-        var user = userClient.findUserById(userId).getBody();
-        if (user == null){
+        var user = userClient.findUserById(userId);
+        if (user.getBody() == null){
             throw new EntityNotFoundException("User not found");
         }
         Build build = buildRepo.findById(buildId)
@@ -220,11 +241,13 @@ public class BuildService {
 
         buildRepo.delete(build);
         likedBuildsRepo.deleteAll(likedBuilds);
+        buildTagsRepo.deleteAllByBuildId(build.getId());
 
         return "Build deleted successfully";
     }
 
-    @Transient
+    //not needed
+    @Transactional
     public void deleteAllFromUser(Long userId){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
@@ -245,6 +268,9 @@ public class BuildService {
 
         buildRepo.deleteAll(builds);
         likedBuildsRepo.deleteAll(likedBuilds);
+        for(Build b : builds){
+            buildTagsRepo.deleteAllByBuildId(b.getId());
+        }
 
         System.out.println("Builds deleted");
     }

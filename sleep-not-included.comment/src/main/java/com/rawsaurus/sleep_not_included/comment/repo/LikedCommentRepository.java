@@ -11,4 +11,5 @@ public interface LikedCommentRepository extends JpaRepository<LikedComments, Lon
     Optional<LikedComments> findByUserIdAndCommentId(Long userId, Long commentId);
 
     List<LikedComments> findAllByUserId(Long userId);
+    List<LikedComments> findAllByCommentId(Long commentId);
 }

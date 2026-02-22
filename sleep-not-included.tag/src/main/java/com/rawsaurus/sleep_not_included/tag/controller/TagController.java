@@ -62,12 +62,6 @@ public class TagController {
         return ResponseEntity.ok(tagService.createTag(request));
     }
 
-    @PostMapping("/build/{buildId}")
-    public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestBody List<Long> tagIds){
-        tagService.addTagsToBuild(buildId, tagIds);
-        return ResponseEntity.ok().build();
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<TagResponse> updateTag(@PathVariable Long id, @Valid @RequestBody TagRequest request){
         return ResponseEntity.ok(tagService.updateTag(id, request));

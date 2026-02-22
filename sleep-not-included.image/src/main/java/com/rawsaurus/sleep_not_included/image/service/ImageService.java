@@ -13,6 +13,8 @@ import com.rawsaurus.sleep_not_included.image.model.Image;
 import com.rawsaurus.sleep_not_included.image.model.ImageType;
 import com.rawsaurus.sleep_not_included.image.repo.ImageRepository;
 import jakarta.persistence.EntityNotFoundException;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -88,24 +92,24 @@ public class ImageService {
     public Resource downloadProfilePic(Long id){
         var user = userClient.findUserById(id).getBody();
         if(user == null){
-            throw new EntityNotFoundException("Build not found");
+            throw new EntityNotFoundException("User not found");
         }
 
         Image image = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id())
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
 
         try{
-            Path filePath = USER_LOCATION.resolve(image.getId().toString()).normalize();
+            Path filePath = USER_LOCATION.resolve(image.getId().toString() + ".jpeg");
+            System.out.print(filePath);
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()){
                 return resource;
             }else{
-                throw new StorageException("File could not be read");
+                throw new StorageException("File " + filePath + " could not be found");
             }
         } catch(Exception e){
-            throw new StorageException("File could not be read");
+            throw new StorageException(e.getMessage());
         }
-
     }
 
     public Resource downloadBuildThumbnail(Long id){
@@ -392,7 +396,13 @@ public class ImageService {
 
         try (InputStream input = file.getInputStream()){
             Path path = ownerData.location().resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
+            Thumbnails.of(input)
+                    .size(480, 320)
+                    .crop(Positions.CENTER)
+                    .outputFormat("jpeg")
+                    .outputQuality(0.85)
+                    .toFile(path.toFile());
+//            Files.copy(input, path, REPLACE_EXISTING);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }

@@ -39,7 +39,7 @@ public class BuildController {
     }
 
     @GetMapping("/search/{name}")
-    public ResponseEntity<Page<BuildResponse>> suggestSearch(@PathVariable String name){
+    public ResponseEntity<List<BuildResponse>> suggestSearch(@PathVariable String name){
         return ResponseEntity.ok(buildService.suggestSearch(name));
     }
 

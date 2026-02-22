@@ -84,17 +84,6 @@ public class TagService {
         );
     }
 
-    public void addTagsToBuild(Long buildId, List<Long> tagIds){
-        //check build and tags?
-        for(Long id : tagIds){
-            BuildTags b = BuildTags.builder()
-                    .buildId(buildId)
-                    .tagId(id)
-                    .build();
-            buildTagsRepo.save(b);
-        }
-    }
-
     public TagResponse updateTag(Long id, TagRequest request){
         Tag tag = tagRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tag not found"));

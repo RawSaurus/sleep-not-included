@@ -10,9 +10,12 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -42,9 +45,12 @@ public class UserService {
         );
     }
 
-    public Page<UserResponse> findUsersByNameLike(String username, Pageable pageable){
-        return userRepo.findAllByusernameLikeIgnoreCase(username, pageable)
-                .map(userMapper::toResponse);
+    public List<UserResponse> findUsersByNameLike(String username){
+        Pageable pageable = PageRequest.of(0,5);
+        return userRepo.searchUsers(username, pageable)
+                .stream()
+                .map(userMapper::toResponse)
+                .toList();
     }
 
     public UserResponse createUser(UserRequest request){

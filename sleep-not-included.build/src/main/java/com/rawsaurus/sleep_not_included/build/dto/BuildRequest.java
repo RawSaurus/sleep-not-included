@@ -14,8 +14,6 @@ public record BuildRequest(
         @NotBlank(message = "Description can't be blank")
         @Size(max = 1000, message = "Description can't be longer than 1000 characters")
         String description,
-        List<Long> tagId,
-        @NotNull
-        Long creatorId
+        List<Long> tagId
 ) {
 }

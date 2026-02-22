@@ -158,12 +158,11 @@ public class CommentService {
         );
     }
 
-    //implement delete responses
-    //doesn't delete liked comments entity
     @Transactional
     public String deleteComment(Long id){
         var comment = commentRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        List<LikedComments> likedCommentsToDelete = likedComsRepo.findAllByCommentId(comment.getId());
 
         if(!comment.isOriginal()){
             var parent = commentRepo.findById(comment.getParent().getId())
@@ -174,6 +173,7 @@ public class CommentService {
 
         commentRepo.deleteAllByParent(comment);
         commentRepo.delete(comment);
+        likedComsRepo.deleteAll(likedCommentsToDelete);
 
         return "Comment deleted";
     }
@@ -186,7 +186,5 @@ public class CommentService {
 
         commentRepo.deleteAll(commentsToDelete);
         likedComsRepo.deleteAll(likedCommentsToDelete);
-
-        System.out.println("comments deleted");
     }
 }
