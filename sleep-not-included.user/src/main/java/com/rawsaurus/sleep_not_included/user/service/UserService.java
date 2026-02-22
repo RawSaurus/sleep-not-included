@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private String queueName = "image.entity.deleted.queue";
-    private String exchangeName = "entity.events";
+    private String exchangeName = "user.events";
     private String routingKey = "entity.deleted";
 
     private final UserRepository userRepo;
@@ -74,7 +74,7 @@ public class UserService {
         //delete related entities
 
         userRepo.delete(user);
-        rabbitTemplate.convertAndSend(exchangeName, routingKey,
+        rabbitTemplate.convertAndSend(exchangeName, "",
                 new DeleteEntityEvent("USER", userId));
 
         return "User deleted successfully";

@@ -2,8 +2,10 @@ package com.rawsaurus.sleep_not_included.comment.service;
 
 import com.rawsaurus.sleep_not_included.comment.client.BuildClient;
 import com.rawsaurus.sleep_not_included.comment.client.UserClient;
+import com.rawsaurus.sleep_not_included.comment.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentRequest;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentResponse;
+import com.rawsaurus.sleep_not_included.comment.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.comment.mapper.CommentMapper;
 import com.rawsaurus.sleep_not_included.comment.model.Comment;
 //import com.rawsaurus.sleep_not_included.comment.model.CommentResponses;
@@ -12,11 +14,13 @@ import com.rawsaurus.sleep_not_included.comment.repo.CommentRepository;
 import com.rawsaurus.sleep_not_included.comment.repo.LikedCommentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -155,6 +159,7 @@ public class CommentService {
     }
 
     //implement delete responses
+    //doesn't delete liked comments entity
     @Transactional
     public String deleteComment(Long id){
         var comment = commentRepo.findById(id)
@@ -171,5 +176,17 @@ public class CommentService {
         commentRepo.delete(comment);
 
         return "Comment deleted";
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.queueName)
+    @Transactional
+    public void deleteCommentFromUser(DeleteEntityEvent event){
+        List<Comment> commentsToDelete = commentRepo.findAllByUserId(event.id());
+        List<LikedComments> likedCommentsToDelete = likedComsRepo.findAllByUserId(event.id());
+
+        commentRepo.deleteAll(commentsToDelete);
+        likedComsRepo.deleteAll(likedCommentsToDelete);
+
+        System.out.println("comments deleted");
     }
 }

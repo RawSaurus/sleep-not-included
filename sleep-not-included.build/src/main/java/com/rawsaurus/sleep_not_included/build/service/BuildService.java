@@ -2,10 +2,8 @@ package com.rawsaurus.sleep_not_included.build.service;
 
 import com.rawsaurus.sleep_not_included.build.clients.TagClient;
 import com.rawsaurus.sleep_not_included.build.clients.UserClient;
-import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
-import com.rawsaurus.sleep_not_included.build.dto.BuildResLoggedIn;
-import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
-import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
+import com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig;
+import com.rawsaurus.sleep_not_included.build.dto.*;
 import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
 import com.rawsaurus.sleep_not_included.build.model.Build;
 import com.rawsaurus.sleep_not_included.build.model.LikedBuilds;
@@ -13,12 +11,14 @@ import com.rawsaurus.sleep_not_included.build.repo.BuildRepository;
 import com.rawsaurus.sleep_not_included.build.repo.LikedBuildsRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -235,5 +235,17 @@ public class BuildService {
 
         buildRepo.deleteAll(builds);
         likedBuildsRepo.deleteAll(likedBuilds);
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.queueName)
+    @Transactional
+    public void deleteBuildsFromUser(DeleteEntityEvent event){
+        List<Build> builds = buildRepo.findAllByCreatorId(event.id());
+        List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(event.id());
+
+        buildRepo.deleteAll(builds);
+        likedBuildsRepo.deleteAll(likedBuilds);
+
+        System.out.println("Builds deleted");
     }
 }

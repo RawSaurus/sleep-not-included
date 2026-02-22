@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     private String queueName = "image.entity.deleted.queue";
-    private String exchangeName = "entity.events";
+    private String exchangeName = "user.events";
     private String routingKey = "entity.deleted";
 
     @Bean
@@ -22,13 +22,13 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(queueName).build();
     }
 
-    @Bean
-    public TopicExchange exchange(){
-        return ExchangeBuilder
-                .topicExchange(exchangeName)
-                .durable(true)
-                .build();
-    }
+//    @Bean
+//    public TopicExchange exchange(){
+//        return ExchangeBuilder
+//                .topicExchange(exchangeName)
+//                .durable(true)
+//                .build();
+//    }
 
     @Bean FanoutExchange fanoutExchange(){
         return ExchangeBuilder
@@ -37,13 +37,13 @@ public class RabbitMQConfig {
                 .build();
     }
 
-    @Bean
-    public Binding binding(){
-        return BindingBuilder
-                .bind(queue())
-                .to(exchange())
-                .with(routingKey);
-    }
+//    @Bean
+//    public Binding binding(){
+//        return BindingBuilder
+//                .bind(queue())
+//                .to(exchange())
+//                .with(routingKey);
+//    }
 
     @Bean
     public AmqpAdmin amqpAdmin(ConnectionFactory connectionFactory){

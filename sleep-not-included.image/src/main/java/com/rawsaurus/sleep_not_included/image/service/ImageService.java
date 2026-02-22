@@ -1,7 +1,6 @@
 package com.rawsaurus.sleep_not_included.image.service;
 
 import com.rawsaurus.sleep_not_included.image.client.BuildClient;
-import com.rawsaurus.sleep_not_included.image.client.GameResClient;
 import com.rawsaurus.sleep_not_included.image.client.UserClient;
 import com.rawsaurus.sleep_not_included.image.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
@@ -49,14 +48,14 @@ public class ImageService {
 
     private final UserClient userClient;
     private final BuildClient buildClient;
-    private final GameResClient resClient;
+//    private final GameResClient resClient;
 
-    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient, GameResClient resClient) {
+    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient) {
         this.imageRepo= imageRepo;
         this.imageMapper = imageMapper;
         this.userClient = userClient;
         this.buildClient = buildClient;
-        this.resClient = resClient;
+//        this.resClient = resClient;
         createDir();
     }
 
@@ -252,41 +251,41 @@ public class ImageService {
         return "File stored successfully";
     }
 
-    @Transactional
-    public String uploadResImage(MultipartFile file, String name){
-        var gameres = resClient.findByName(name).getBody();
-        if(gameres == null){
-            throw new EntityNotFoundException("Build not found");
-        }
-
-        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(RES_IMAGE_LOCATION.toString(), gameres.id());
-
-        if(checkImage.isPresent()){
-            throw new ActionNotAllowed("Image already exists");
-        }
-
-        Image imageToSave = Image.builder()
-                .filename(file.getOriginalFilename())
-                .type(RES_IMAGE)
-                .size(file.getSize())
-                .storagePath(RES_IMAGE_LOCATION.toString())
-                .ownerService("gameres")
-                .ownerId(gameres.id())
-                .build();
-
-        Image image = imageRepo.save(imageToSave);
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = RES_IMAGE_LOCATION.resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
+//    @Transactional
+//    public String uploadResImage(MultipartFile file, String name){
+//        var gameres = resClient.findByName(name).getBody();
+//        if(gameres == null){
+//            throw new EntityNotFoundException("Build not found");
+//        }
+//
+//        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(RES_IMAGE_LOCATION.toString(), gameres.id());
+//
+//        if(checkImage.isPresent()){
+//            throw new ActionNotAllowed("Image already exists");
+//        }
+//
+//        Image imageToSave = Image.builder()
+//                .filename(file.getOriginalFilename())
+//                .type(RES_IMAGE)
+//                .size(file.getSize())
+//                .storagePath(RES_IMAGE_LOCATION.toString())
+//                .ownerService("gameres")
+//                .ownerId(gameres.id())
+//                .build();
+//
+//        Image image = imageRepo.save(imageToSave);
+//
+//        if(!file.getContentType().equals("image/jpeg")){
+//            throw new StorageException("Wrong content type");
+//        }
+//        try (InputStream input = file.getInputStream()){
+//            Path path = RES_IMAGE_LOCATION.resolve(image.getId().toString());
+//            Files.copy(input, path, REPLACE_EXISTING);
+//        } catch (IOException e) {
+//            throw new StorageException(e.getMessage());
+//        }
+//        return "File stored successfully";
+//    }
 
     @Transactional
     public String updateImage(MultipartFile file, ImageType type, String name){
@@ -409,13 +408,13 @@ public class ImageService {
                 }
                 ownerData = new OwnerData(user.id(), user.username(), "user", USER_LOCATION);
             }
-            case RES_IMAGE -> {
-                var gameres = resClient.findByName(name).getBody();
-                if(gameres == null){
-                    throw new EntityNotFoundException("Build not found");
-                }
-                ownerData = new OwnerData(gameres.id(), gameres.name(), "gameres", RES_IMAGE_LOCATION);
-            }
+//            case RES_IMAGE -> {
+//                var gameres = resClient.findByName(name).getBody();
+//                if(gameres == null){
+//                    throw new EntityNotFoundException("Build not found");
+//                }
+//                ownerData = new OwnerData(gameres.id(), gameres.name(), "gameres", RES_IMAGE_LOCATION);
+//            }
             case BUILD_IMAGE, BUILD_THUMBNAIL -> {
                 var build = buildClient.findByName(name).getBody();
                 if(build == null){
