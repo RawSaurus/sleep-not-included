@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/image")
@@ -31,47 +33,47 @@ public class ImageController {
         return ResponseEntity.ok(imageService.findById(id));
     }
 
-    @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<ImageResponse> findByOwnerId(@PathVariable Long ownerId){
-        return ResponseEntity.ok(imageService.findByOwnerId(ownerId));
+    @GetMapping("/download/{name}")
+    public ResponseEntity<Resource> downloadImage(@RequestParam ImageType type, @PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadImage(type, name));
     }
 
-    @GetMapping("/download/{filename}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename){
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.download(filename));
+    @GetMapping("/download/build-images/{name}")
+    public ResponseEntity<List<Resource>> downloadBuildImages(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadBuildImages(name));
     }
 
-    @GetMapping("/download/profile/{id}")
-    public ResponseEntity<Resource> downloadProfilePic(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadProfilePic(id));
-    }
-
-    @GetMapping("/download/build-thumbnail/{id}")
-    public ResponseEntity<Resource> downloadBuildThumbnail(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadBuildThumbnail(id));
-    }
-
-    @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam MultipartFile file){
-        return ResponseEntity.ok(imageService.upload(file));
-    }
-
-    @PostMapping("/upload/test/{name}")
-    public ResponseEntity<?> uploadTest(
+    @PostMapping("/upload/{name}")
+    public ResponseEntity<?> uploadImage(
             @RequestParam MultipartFile file,
             @RequestParam ImageType type,
             @PathVariable String name
     ){
-        return ResponseEntity.ok(imageService.testUpload(file, type, name));
+        return ResponseEntity.ok(imageService.uploadImage(file, type, name));
     }
 
-    @PostMapping("/upload/profile/{name}")
-    public ResponseEntity<?> uploadProfilePic(@RequestParam MultipartFile file, @PathVariable String name){
-        return ResponseEntity.ok(imageService.uploadProfilePic(file, name));
+    @PostMapping("/upload/build-images/{name}")
+    public ResponseEntity<?> uploadTest(
+            @RequestParam List<MultipartFile> files,
+            @PathVariable String name
+    ){
+        return ResponseEntity.ok(imageService.uploadBuildImages(files, name));
     }
 
-    @PostMapping("/upload/build-thumbnail/{name}")
-    public ResponseEntity<?> uploadBuildThumbnail(@RequestParam MultipartFile file, @PathVariable String name){
-        return ResponseEntity.ok(imageService.uploadBuildThumbnail(file, name));
+    @PutMapping("/update/{name}")
+    public ResponseEntity<?> updateImage(
+            @RequestParam MultipartFile file,
+            @RequestParam ImageType type,
+            @PathVariable String name
+    ){
+        return ResponseEntity.ok(imageService.updateImage(file, type, name));
+    }
+
+    @DeleteMapping("/{serviceName}/{ownerId}")
+    public ResponseEntity<?> deleteImage(
+            @PathVariable String serviceName,
+            @PathVariable Long ownerId
+    ){
+        return ResponseEntity.ok(imageService.deleteFile(serviceName, ownerId));
     }
 }

@@ -12,56 +12,54 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    private String queueName = "image.entity.deleted.queue";
-    private String exchangeName = "user.events";
-    private String routingKey = "entity.deleted";
-
-    @Bean
-    public Queue queue(){
-        return QueueBuilder.durable(queueName).build();
-    }
-
-//    @Bean
-//    public TopicExchange exchange(){
-//        return ExchangeBuilder
-//                .topicExchange(exchangeName)
-//                .durable(true)
-//                .build();
-//    }
-
-//    @Bean
-//    public Binding binding(){
-//        return BindingBuilder
-//                .bind(queue())
-//                .to(exchange())
-//                .with(routingKey);
-//    }
+    public static final String IMAGE_USER_DELETED_QUEUE = "image.user.deleted.queue";
+    public static final String IMAGE_BUILD_DELETED_QUEUE = "image.build.deleted.queue";
+    public static final String USER_EVENTS_EXCHANGE = "user.events";
+    public static final String BUILD_EVENTS_EXCHANGE = "build.events";
+    public static final String ROUTING_KEY = "entity.deleted";
 
     @Bean
     public FanoutExchange userEventsExchange(){
         return ExchangeBuilder
-                .fanoutExchange(exchangeName)
+                .fanoutExchange(USER_EVENTS_EXCHANGE)
                 .durable(true)
                 .build();
     }
 
     @Bean
-    public Binding deleteImageBinding(Queue queue, FanoutExchange userEventsExchange){
+    public FanoutExchange buildEventsExchange(){
+        return ExchangeBuilder
+                .fanoutExchange(BUILD_EVENTS_EXCHANGE)
+                .durable(true)
+                .build();
+    }
+
+    @Bean
+    public Queue imageUserDeletedQueue(){
+        return QueueBuilder.durable(IMAGE_USER_DELETED_QUEUE).build();
+    }
+
+    @Bean
+    public Queue imagerBuildDeletedQueue(){
+        return QueueBuilder.durable(IMAGE_BUILD_DELETED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding imageUserBinding(){
         return BindingBuilder
-                .bind(queue)
-                .to(userEventsExchange);
+                .bind(imageUserDeletedQueue())
+                .to(userEventsExchange());
+    }
+
+    @Bean
+    public Binding imageBuildBinding(){
+        return BindingBuilder
+                .bind(imagerBuildDeletedQueue())
+                .to(buildEventsExchange());
     }
 
     @Bean
     public MessageConverter messageConverter(){
         return new JacksonJsonMessageConverter();
     }
-
-//    @Bean
-//    public RabbitTemplate template(ConnectionFactory connectionFactory){
-//        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-//        template.setMessageConverter(messageConverter());
-//        template.setExchange(exchangeName);
-//        return template;
-//    }
 }

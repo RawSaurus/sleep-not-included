@@ -1,32 +1,31 @@
 package com.rawsaurus.sleep_not_included.tag.service;
 
+import com.rawsaurus.sleep_not_included.tag.config.RabbitMQConfig;
+import com.rawsaurus.sleep_not_included.tag.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.tag.dto.TagRequest;
 import com.rawsaurus.sleep_not_included.tag.dto.TagResponse;
 import com.rawsaurus.sleep_not_included.tag.mapper.TagMapper;
-import com.rawsaurus.sleep_not_included.tag.model.BuildTags;
 import com.rawsaurus.sleep_not_included.tag.model.Tag;
 import com.rawsaurus.sleep_not_included.tag.model.Type;
-import com.rawsaurus.sleep_not_included.tag.repo.BuildTagsRepository;
 import com.rawsaurus.sleep_not_included.tag.repo.TagRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
 public class TagService {
 
     private final TagRepository tagRepo;
-    private final BuildTagsRepository buildTagsRepo;
 
     private final TagMapper tagMapper;
+
+    private final RabbitTemplate rabbitTemplate;
 
     public TagResponse findById(Long id){
         return tagMapper.toResponse(
@@ -49,31 +48,9 @@ public class TagService {
                 .toList();
     }
 
-    public List<BuildTags> findAllBuildsByTags(List<Tag> tags){
-        return null;
-    }
-
-    public List<TagResponse> findAll(){
-        return tagRepo.findAll()
-                .stream()
-                .map(tagMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    public List<TagResponse> findAllByBuild(Long buildId){
-        //check build
-        List<BuildTags> tagIds = buildTagsRepo.findAllByBuildId(buildId);
-        List<TagResponse> tags = new ArrayList<>();
-
-        for(BuildTags b : tagIds){
-            tags.add(
-                    tagMapper.toResponse(
-                            tagRepo.findById(b.getTagId())
-                                    .orElseThrow(() -> new EntityNotFoundException("Tag not found"))
-                    )
-            );
-        }
-        return tags;
+    public Page<TagResponse> findAll(Pageable pageable){
+        return tagRepo.findAll(pageable)
+                .map(tagMapper::toResponse);
     }
 
     public TagResponse createTag(TagRequest request){
@@ -100,6 +77,12 @@ public class TagService {
                 .orElseThrow(() -> new EntityNotFoundException("Tag not found"));
 
         tagRepo.delete(tag);
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.TAG_EVENTS_EXCHANGE,
+                "",
+                new DeleteEntityEvent("tag", tag.getId())
+        );
 
         return "Tag deleted successfully";
     }

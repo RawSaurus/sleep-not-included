@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Optional;
@@ -178,7 +179,7 @@ public class CommentService {
         return "Comment deleted";
     }
 
-    @RabbitListener(queues = RabbitMQConfig.queueName)
+    @RabbitListener(queues = RabbitMQConfig.COMMENT_USER_DELETED_QUEUE)
     @Transactional
     public void deleteCommentFromUser(DeleteEntityEvent event){
         List<Comment> commentsToDelete = commentRepo.findAllByUserId(event.id());
@@ -186,5 +187,11 @@ public class CommentService {
 
         commentRepo.deleteAll(commentsToDelete);
         likedComsRepo.deleteAll(likedCommentsToDelete);
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.COMMENT_BUILD_DELETED_QUEUE)
+    @Transactional
+    public void deleteCommentFromBuild(DeleteEntityEvent event){
+        System.out.println(event.toString());
     }
 }

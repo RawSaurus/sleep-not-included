@@ -14,4 +14,5 @@ public interface BuildTagsRepository extends JpaRepository<BuildTags, Long> {
     List<BuildTags> findAllByBuildId(Long buildId);
 
     void deleteAllByBuildId(Long buildId);
+    void deleteAllByTagId(Long tagId);
 }

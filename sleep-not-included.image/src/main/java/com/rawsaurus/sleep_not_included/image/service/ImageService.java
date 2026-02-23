@@ -3,6 +3,7 @@ package com.rawsaurus.sleep_not_included.image.service;
 import com.rawsaurus.sleep_not_included.image.client.BuildClient;
 import com.rawsaurus.sleep_not_included.image.client.GameResClient;
 import com.rawsaurus.sleep_not_included.image.client.UserClient;
+import com.rawsaurus.sleep_not_included.image.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.image.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
 import com.rawsaurus.sleep_not_included.image.dto.OwnerData;
@@ -29,17 +30,15 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
+import static com.rawsaurus.sleep_not_included.image.config.RabbitMQConfig.*;
 import static com.rawsaurus.sleep_not_included.image.model.ImageType.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Service
 public class ImageService {
-
-    private static final String queueName = "image.entity.deleted.queue";
-    private String exchangeName = "entity.events";
-    private String routingKey = "entity.deleted";
 
     private static final Path ROOT_LOCATION = Paths.get("./sleep-not-included.image/Files-Upload");
     private static final Path USER_LOCATION = Paths.get(ROOT_LOCATION.toString(), "/user");
@@ -71,35 +70,15 @@ public class ImageService {
         );
     }
 
-    public ImageResponse findByOwnerId(Long ownerId){
-        return null;
-    }
+    public Resource downloadImage(ImageType type, String name){
 
-    public Resource download(String filename){
-        try{
-            Path filePath = ROOT_LOCATION.resolve(filename).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-            if(resource.exists()){
-                return resource;
-            }else{
-                throw new StorageException("File could not be read");
-            }
-        } catch(Exception e){
-            throw new StorageException("File could not be read");
-        }
-    }
+        OwnerData ownerData = checkOwner(type, name);
 
-    public Resource downloadProfilePic(Long id){
-        var user = userClient.findUserById(id).getBody();
-        if(user == null){
-            throw new EntityNotFoundException("User not found");
-        }
-
-        Image image = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id())
+        Image image = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id())
                 .orElseThrow(() -> new EntityNotFoundException("Image not found"));
 
         try{
-            Path filePath = USER_LOCATION.resolve(image.getId().toString() + ".jpeg");
+            Path filePath = ownerData.location().resolve(image.getId().toString() + ".jpeg");
             System.out.print(filePath);
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()){
@@ -110,6 +89,30 @@ public class ImageService {
         } catch(Exception e){
             throw new StorageException(e.getMessage());
         }
+    }
+
+    public List<Resource> downloadBuildImages(String name){
+        ImageType type = BUILD_IMAGE;
+        OwnerData ownerData = checkOwner(type, name);
+
+        List<Image> images = imageRepo.findAllByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id());
+        List<Resource> resources = new ArrayList<>();
+
+        for(Image image : images) {
+            try {
+                Path filePath = ownerData.location().resolve(image.getId().toString() + ".jpeg");
+                System.out.print(filePath);
+                Resource resource = new UrlResource(filePath.toUri());
+                if (resource.exists()) {
+                    resources.add(resource);
+                } else {
+                    throw new StorageException("File " + filePath + " could not be found");
+                }
+            } catch (Exception e) {
+                throw new StorageException(e.getMessage());
+            }
+        }
+        return resources;
     }
 
     public Resource downloadBuildThumbnail(Long id){
@@ -134,243 +137,11 @@ public class ImageService {
         }
     }
 
-    public String upload(MultipartFile file){
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = ROOT_LOCATION.resolve(file.getName());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-
     @Transactional
-    public String uploadProfilePic(MultipartFile file, String name){
-        var user = userClient.findUserByName(name).getBody();
-        if(user == null){
-            throw new EntityNotFoundException("User not found");
+    public String uploadImage(MultipartFile file, ImageType type, String name){
+        if(!file.isEmpty()){
+            throw new StorageException("No image provided");
         }
-
-        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(USER_LOCATION.toString(), user.id());
-
-        if(checkImage.isPresent()){
-            throw new ActionNotAllowed("Image already exists");
-        }
-
-        Image imageToSave = Image.builder()
-                .filename(file.getOriginalFilename())
-                .type(PROFILE_PIC)
-                .size(file.getSize())
-                .storagePath(USER_LOCATION.toString())
-                .ownerService("user")
-                .ownerId(user.id())
-                .build();
-
-        Image image = imageRepo.save(imageToSave);
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = USER_LOCATION.resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-    @Transactional
-    public String uploadBuildThumbnail(MultipartFile file, String name){
-        var build = buildClient.findByName(name).getBody();
-        if(build == null){
-            throw new EntityNotFoundException("Build not found");
-        }
-
-        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(BUILD_THUMBNAIL_LOCATION.toString(), build.id());
-
-        if(checkImage.isPresent()){
-            throw new ActionNotAllowed("Image already exists");
-        }
-
-        Image imageToSave = Image.builder()
-                .filename(file.getOriginalFilename())
-                .type(BUILD_THUMBNAIL)
-                .size(file.getSize())
-                .storagePath(BUILD_THUMBNAIL_LOCATION.toString())
-                .ownerService("build")
-                .ownerId(build.id())
-                .build();
-
-        Image image = imageRepo.save(imageToSave);
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = BUILD_THUMBNAIL_LOCATION.resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-    @Transactional
-    public String uploadBuildImages(MultipartFile file, String name){
-        var build = buildClient.findByName(name).getBody();
-        if(build == null){
-            throw new EntityNotFoundException("Build not found");
-        }
-
-        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(BUILD_IMAGE_LOCATION.toString(), build.id());
-
-        if(checkImage.isPresent()){
-            throw new ActionNotAllowed("Image already exists");
-        }
-
-        Image imageToSave = Image.builder()
-                .filename(file.getOriginalFilename())
-                .type(BUILD_IMAGE)
-                .size(file.getSize())
-                .storagePath(BUILD_IMAGE_LOCATION.toString())
-                .ownerService("build")
-                .ownerId(build.id())
-                .build();
-
-        Image image = imageRepo.save(imageToSave);
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = BUILD_IMAGE_LOCATION.resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-    @Transactional
-    public String uploadResImage(MultipartFile file, String name){
-        var gameres = resClient.findByName(name).getBody();
-        if(gameres == null){
-            throw new EntityNotFoundException("Build not found");
-        }
-
-        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(RES_IMAGE_LOCATION.toString(), gameres.id());
-
-        if(checkImage.isPresent()){
-            throw new ActionNotAllowed("Image already exists");
-        }
-
-        Image imageToSave = Image.builder()
-                .filename(file.getOriginalFilename())
-                .type(RES_IMAGE)
-                .size(file.getSize())
-                .storagePath(RES_IMAGE_LOCATION.toString())
-                .ownerService("gameres")
-                .ownerId(gameres.id())
-                .build();
-
-        Image image = imageRepo.save(imageToSave);
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-        try (InputStream input = file.getInputStream()){
-            Path path = RES_IMAGE_LOCATION.resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-    @Transactional
-    public String updateImage(MultipartFile file, ImageType type, String name){
-
-        if(!file.getContentType().equals("image/jpeg")){
-            throw new StorageException("Wrong content type");
-        }
-
-        OwnerData ownerData = checkOwner(type, name);
-
-        Image imageToSave = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id())
-                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
-
-        imageToSave.setFilename(file.getOriginalFilename());
-        imageToSave.setType(type);
-        imageToSave.setSize(file.getSize());
-        imageToSave.setStoragePath(ownerData.location().toString());
-        imageToSave.setOwnerService(ownerData.ownerService());
-        imageToSave.setOwnerId(ownerData.id());
-
-        Image image = imageRepo.save(imageToSave);
-
-
-        try (InputStream input = file.getInputStream()){
-            Path path = ownerData.location().resolve(image.getId().toString());
-            Files.copy(input, path, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
-        return "File stored successfully";
-    }
-
-    @RabbitListener(queues = queueName)
-    @Transactional
-    public void deleteFile(DeleteEntityEvent event){
-        List<Image> imgsToDelete = imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerId(event.serviceName(), event.id());
-
-        imageRepo.deleteAll(imgsToDelete);
-
-        try {
-            switch (event.serviceName().toLowerCase()) {
-                case "user" -> {
-                    for (Image i : imgsToDelete) {
-                        Files.deleteIfExists(USER_LOCATION.resolve(i.getId().toString()));
-                    }
-                }
-                case "build" -> {
-                    for (Image i : imgsToDelete) {
-                        Files.deleteIfExists(BUILD_THUMBNAIL_LOCATION.resolve(i.getId().toString()));
-                        Files.deleteIfExists(BUILD_IMAGE_LOCATION.resolve(i.getId().toString()));
-                    }
-                }
-                case "res" -> {
-                    for (Image i : imgsToDelete) {
-                        Files.deleteIfExists(RES_IMAGE_LOCATION.resolve(i.getId().toString()));
-                    }
-                }
-                default -> throw new StorageException("Wrong service name");
-            }
-        } catch (IOException e){
-            throw new StorageException("File wasn't found", e.getCause());
-        }
-    }
-
-    private void createDir(){
-        try {
-            if(!Files.exists(ROOT_LOCATION)) {
-                Files.createDirectory(ROOT_LOCATION);
-                Files.createDirectory(USER_LOCATION);
-                Files.createDirectory(BUILD_IMAGE_LOCATION);
-                Files.createDirectory(BUILD_THUMBNAIL_LOCATION);
-                Files.createDirectory(RES_IMAGE_LOCATION);
-            }
-        } catch (IOException e) {
-            throw new StorageException("Could not create directory " + ROOT_LOCATION);
-        }
-    }
-
-    @Transactional
-    public String testUpload(MultipartFile file, ImageType type, String name){
         if(!file.getContentType().equals("image/jpeg")){
             throw new StorageException("Wrong content type");
         }
@@ -409,6 +180,142 @@ public class ImageService {
         return "File stored successfully";
     }
 
+    @Transactional
+    public String uploadBuildImages(List<MultipartFile> files, String name){
+        if(!files.get(0).isEmpty()){
+            throw new StorageException("No image provided");
+        }
+
+        for (MultipartFile file : files) {
+            if (!file.getContentType().equals("image/jpeg")) {
+                throw new StorageException("Wrong content type");
+            }
+        }
+        ImageType type = BUILD_IMAGE;
+        OwnerData ownerData = checkOwner(type, name);
+
+//        var checkImage = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id());
+
+//        if(checkImage.isPresent()){
+//            throw new ActionNotAllowed("Image already exists");
+//        }
+
+        for(MultipartFile file : files) {
+            Image imageToSave = Image.builder()
+                    .filename(file.getOriginalFilename())
+                    .type(type)
+                    .size(file.getSize())
+                    .storagePath(ownerData.location().toString())
+                    .ownerService(ownerData.ownerService())
+                    .ownerId(ownerData.id())
+                    .build();
+
+            Image image = imageRepo.save(imageToSave);
+
+            if(image != null){
+                try (InputStream input = file.getInputStream()) {
+                    Path path = ownerData.location().resolve(image.getId().toString());
+                    Thumbnails.of(input)
+                            .size(480, 320)
+                            .crop(Positions.CENTER)
+                            .outputFormat("jpeg")
+                            .outputQuality(0.85)
+                            .toFile(path.toFile());
+    //            Files.copy(input, path, REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new StorageException(e.getMessage());
+                }
+            }
+        }
+        return "File stored successfully";
+    }
+
+    @Transactional
+    public String updateImage(MultipartFile file, ImageType type, String name){
+
+        if(!file.getContentType().equals("image/jpeg")){
+            throw new StorageException("Wrong content type");
+        }
+
+        OwnerData ownerData = checkOwner(type, name);
+
+        Image imageToSave = imageRepo.findImageByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id())
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+
+        imageToSave.setFilename(file.getOriginalFilename());
+        imageToSave.setType(type);
+        imageToSave.setSize(file.getSize());
+        imageToSave.setStoragePath(ownerData.location().toString());
+        imageToSave.setOwnerService(ownerData.ownerService());
+        imageToSave.setOwnerId(ownerData.id());
+
+        Image image = imageRepo.save(imageToSave);
+
+
+        try (InputStream input = file.getInputStream()){
+            Path path = ownerData.location().resolve(image.getId().toString());
+            Files.copy(input, path, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        return "File stored successfully";
+    }
+
+    public String deleteFile(String serviceName, Long ownerId){
+        deleteFilesInternal(serviceName, ownerId);
+        return "File deleted";
+    }
+
+    @RabbitListener(queues = {IMAGE_USER_DELETED_QUEUE, IMAGE_BUILD_DELETED_QUEUE})
+    @Transactional
+    public void deleteFile(DeleteEntityEvent event){
+        deleteFilesInternal(event.serviceName(), event.id());
+    }
+
+    private void deleteFilesInternal(String serviceName, Long ownerId){
+        List<Image> imgsToDelete = imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerId(serviceName, ownerId);
+
+        imageRepo.deleteAll(imgsToDelete);
+
+        try {
+            switch (serviceName.toLowerCase()) {
+                case "user" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(USER_LOCATION.resolve(i.getId().toString() +".jpeg"));
+                    }
+                }
+                case "build" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(BUILD_THUMBNAIL_LOCATION.resolve(i.getId().toString() +".jpeg"));
+                        Files.deleteIfExists(BUILD_IMAGE_LOCATION.resolve(i.getId().toString() +".jpeg"));
+                    }
+                }
+                case "res" -> {
+                    for (Image i : imgsToDelete) {
+                        Files.deleteIfExists(RES_IMAGE_LOCATION.resolve(i.getId().toString() +".jpeg"));
+                    }
+                }
+                default -> throw new StorageException("Wrong service name");
+            }
+        } catch (IOException e){
+            throw new StorageException("File wasn't found", e.getCause());
+        }
+    }
+
+    private void createDir(){
+        try {
+            if(!Files.exists(ROOT_LOCATION)) {
+                Files.createDirectory(ROOT_LOCATION);
+                Files.createDirectory(USER_LOCATION);
+                Files.createDirectory(BUILD_IMAGE_LOCATION);
+                Files.createDirectory(BUILD_THUMBNAIL_LOCATION);
+                Files.createDirectory(RES_IMAGE_LOCATION);
+            }
+        } catch (IOException e) {
+            throw new StorageException("Could not create directory " + ROOT_LOCATION);
+        }
+    }
+
     private OwnerData checkOwner(ImageType type, String name){
         OwnerData ownerData;
         switch(type){
@@ -422,7 +329,7 @@ public class ImageService {
             case RES_IMAGE -> {
                 var gameres = resClient.findByName(name).getBody();
                 if(gameres == null){
-                    throw new EntityNotFoundException("Build not found");
+                    throw new EntityNotFoundException("Resource not found");
                 }
                 ownerData = new OwnerData(gameres.id(), gameres.name(), "gameres", RES_IMAGE_LOCATION);
             }

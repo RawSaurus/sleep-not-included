@@ -4,6 +4,7 @@ import com.rawsaurus.sleep_not_included.build.clients.TagClient;
 import com.rawsaurus.sleep_not_included.build.clients.UserClient;
 import com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.build.dto.*;
+import com.rawsaurus.sleep_not_included.build.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
 import com.rawsaurus.sleep_not_included.build.model.Build;
 import com.rawsaurus.sleep_not_included.build.model.BuildTags;
@@ -14,6 +15,7 @@ import com.rawsaurus.sleep_not_included.build.repo.LikedBuildsRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,6 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,7 @@ public class BuildService {
     private final TagClient tagClient;
 
     private final BuildMapper buildMapper;
+    private final RabbitTemplate rabbitTemplate;
 
     public String test(Long userId){
         return userClient.findUserById(userId).getBody().toString();
@@ -88,6 +94,11 @@ public class BuildService {
                 .toList();
     }
 
+    public List<BuildResponse> filterSearch(List<Long> tagIds, String name){
+        //
+        return null;
+    }
+
     public Page<BuildResponse> findAll(Pageable pageable){
         return buildRepo.findAll(pageable)
                 .map(buildMapper::toResponse);
@@ -117,6 +128,32 @@ public class BuildService {
         return new PageImpl<>(res);
     }
 
+//    public List<BuildTags> findAllBuildsByTags(List<Tag> tags){
+//        return null;
+//    }
+//
+//    public List<TagResponse> findAll(){
+//        return tagRepo.findAll()
+//                .stream()
+//                .map(tagMapper::toResponse)
+//                .collect(Collectors.toList());
+//    }
+//
+//    public List<TagResponse> findAllByBuild(Long buildId){
+//        //check build
+//        List<BuildTags> tagIds = buildTagsRepo.findAllByBuildId(buildId);
+//        List<TagResponse> tags = new ArrayList<>();
+//
+//        for(BuildTags b : tagIds){
+//            tags.add(
+//                    tagMapper.toResponse(
+//                            tagRepo.findById(b.getTagId())
+//                                    .orElseThrow(() -> new EntityNotFoundException("Tag not found"))
+//                    )
+//            );
+//        }
+//        return tags;
+//    }
     //rework
 //    public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
 //        return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
@@ -218,6 +255,10 @@ public class BuildService {
         Build build = buildRepo.findById(buildId)
                 .orElseThrow(() -> new EntityNotFoundException("Build not found"));
 
+        if(!user.id().equals(build.getCreatorId())){
+            throw new ActionNotAllowed("You cannot update this build");
+        }
+
         buildMapper.updateToEntity(request, build);
 
         //try come up with better impl
@@ -237,11 +278,22 @@ public class BuildService {
         }
         Build build = buildRepo.findById(buildId)
                 .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+
+        if(!user.getBody().id().equals(build.getCreatorId())){
+            throw new ActionNotAllowed("You cannot delete this build");
+        }
+
         List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByBuildId(buildId);
 
         buildRepo.delete(build);
         likedBuildsRepo.deleteAll(likedBuilds);
         buildTagsRepo.deleteAllByBuildId(build.getId());
+
+        rabbitTemplate.convertAndSend(
+                BUILD_EVENT_EXCHANGE,
+                "",
+                new DeleteEntityEvent("build", buildId)
+        );
 
         return "Build deleted successfully";
     }
@@ -260,7 +312,7 @@ public class BuildService {
         likedBuildsRepo.deleteAll(likedBuilds);
     }
 
-    @RabbitListener(queues = RabbitMQConfig.queueName)
+    @RabbitListener(queues = BUILD_USER_DELETED_QUEUE)
     @Transactional
     public void deleteBuildsFromUser(DeleteEntityEvent event){
         List<Build> builds = buildRepo.findAllByCreatorId(event.id());
@@ -270,8 +322,19 @@ public class BuildService {
         likedBuildsRepo.deleteAll(likedBuilds);
         for(Build b : builds){
             buildTagsRepo.deleteAllByBuildId(b.getId());
-        }
 
+            rabbitTemplate.convertAndSend(
+                    BUILD_EVENT_EXCHANGE,
+                    "",
+                    new DeleteEntityEvent("build", b.getId())
+            );
+        }
         System.out.println("Builds deleted");
+    }
+
+    @RabbitListener(queues = BUILD_TAG_DELETED_QUEUE)
+    @Transactional
+    public void deleteTagsFromBuild(DeleteEntityEvent event){
+        buildTagsRepo.deleteAllByTagId(event.id());
     }
 }

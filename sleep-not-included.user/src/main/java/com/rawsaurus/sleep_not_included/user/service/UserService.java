@@ -1,5 +1,6 @@
 package com.rawsaurus.sleep_not_included.user.service;
 
+import com.rawsaurus.sleep_not_included.user.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.user.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.user.dto.UserRequest;
 import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
@@ -73,15 +74,14 @@ public class UserService {
 
     @Transactional
     public String deleteUser(Long userId){
-        //check for user
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        //delete related entities
-
         userRepo.delete(user);
-        rabbitTemplate.convertAndSend(exchangeName, "",
-                new DeleteEntityEvent("USER", userId));
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                "",
+                new DeleteEntityEvent("user", userId));
 
         return "User deleted successfully";
     }

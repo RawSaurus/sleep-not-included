@@ -1,7 +1,8 @@
-package com.rawsaurus.sleep_not_included.user.config;
+package com.rawsaurus.sleep_not_included.tag.config;
 
-import com.rabbitmq.client.AMQP;
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -13,21 +14,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String USER_EVENTS_EXCHANGE = "user.events";
-
+    public static final String TAG_EVENTS_EXCHANGE = "tag.events";
 
     @Bean FanoutExchange fanoutExchange(){
         return ExchangeBuilder
-                .fanoutExchange(USER_EVENTS_EXCHANGE)
+                .fanoutExchange(TAG_EVENTS_EXCHANGE)
                 .durable(true)
                 .build();
-    }
-
-    @Bean
-    public AmqpAdmin amqpAdmin(ConnectionFactory connectionFactory){
-        RabbitAdmin admin = new RabbitAdmin(connectionFactory);
-        admin.setAutoStartup(true);
-        return admin;
     }
 
     @Bean
@@ -39,7 +32,7 @@ public class RabbitMQConfig {
     public RabbitTemplate template(ConnectionFactory connectionFactory){
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter());
-        template.setExchange(USER_EVENTS_EXCHANGE);
+        template.setExchange(TAG_EVENTS_EXCHANGE);
         return template;
     }
 }

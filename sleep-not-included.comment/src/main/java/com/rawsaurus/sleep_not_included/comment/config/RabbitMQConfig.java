@@ -9,44 +9,50 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String queueName = "comment.entity.deleted.queue";
-    public static String exchangeName = "user.events";
-    public static String routingKey = "entity.deleted";
-
-    @Bean
-    public Queue queue(){
-        return QueueBuilder.durable(queueName).build();
-    }
-
-//    @Bean
-//    public TopicExchange exchange(){
-//        return ExchangeBuilder
-//                .topicExchange(exchangeName)
-//                .durable(true)
-//                .build();
-//    }
-
-//    @Bean
-//    public Binding binding(){
-//        return BindingBuilder
-//                .bind(queue())
-//                .to(exchange())
-//                .with(routingKey);
-//    }
+    public static final String COMMENT_USER_DELETED_QUEUE = "comment.user.deleted.queue";
+    public static final String COMMENT_BUILD_DELETED_QUEUE = "comment.build.deleted.queue";
+    public static final String USER_EVENTS_EXCHANGE = "user.events";
+    public static final String BUILD_EVENTS_EXCHANGE = "build.events";
+    public static final String ROUTING_KEY = "entity.deleted";
 
     @Bean
     public FanoutExchange userEventsExchange(){
         return ExchangeBuilder
-                .fanoutExchange(exchangeName)
+                .fanoutExchange(USER_EVENTS_EXCHANGE)
                 .durable(true)
                 .build();
     }
 
     @Bean
-    public Binding deleteImageBinding(Queue queue, FanoutExchange userEventsExchange){
+    public FanoutExchange buildEventsExchange(){
+        return ExchangeBuilder
+                .fanoutExchange(BUILD_EVENTS_EXCHANGE)
+                .durable(true)
+                .build();
+    }
+
+    @Bean
+    public Queue commentUserDeletedQueue(){
+        return QueueBuilder.durable(COMMENT_USER_DELETED_QUEUE).build();
+    }
+
+    @Bean
+    public Queue commentBuildDeletedQueue(){
+        return QueueBuilder.durable(COMMENT_BUILD_DELETED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding commentUserBinding(){
         return BindingBuilder
-                .bind(queue)
-                .to(userEventsExchange);
+                .bind(commentUserDeletedQueue())
+                .to(userEventsExchange());
+    }
+
+    @Bean
+    public Binding commentBuildBinding(){
+        return BindingBuilder
+                .bind(commentBuildDeletedQueue())
+                .to(buildEventsExchange());
     }
 
     @Bean

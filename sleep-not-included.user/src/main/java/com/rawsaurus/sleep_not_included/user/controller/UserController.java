@@ -47,9 +47,8 @@ public class UserController {
         return ResponseEntity.ok(userService.findUserByName(username));
     }
 
-    //probably hardcode pageable values
     @GetMapping("/search/{username}")
-    public ResponseEntity<List<UserResponse>> findUsersByNameLike( @PathVariable String username){
+    public ResponseEntity<List<UserResponse>> findUsersByNameLike(@PathVariable String username){
         return ResponseEntity.ok(userService.findUsersByNameLike(username));
     }
 
