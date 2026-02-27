@@ -6,6 +6,7 @@ import com.rawsaurus.sleep_not_included.user.dto.UserRequest;
 import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.mapper.UserMapper;
 import com.rawsaurus.sleep_not_included.user.model.User;
+import com.rawsaurus.sleep_not_included.user.model.UserRole;
 import com.rawsaurus.sleep_not_included.user.repo.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,9 @@ import java.util.List;
 @Service
 public class UserService {
 
-    private String queueName = "image.entity.deleted.queue";
-    private String exchangeName = "user.events";
-    private String routingKey = "entity.deleted";
-
     private final UserRepository userRepo;
+
+    private final KeycloakAdminService keycloakAdminService;
 
     private final UserMapper userMapper;
 
@@ -55,10 +54,23 @@ public class UserService {
     }
 
     public UserResponse createUser(UserRequest request){
+        String token = keycloakAdminService.getAdminAccessToken();
+        String keycloakId = keycloakAdminService.createUser(token, request);
+
+        User user = userMapper.toEntity(request);
+        user.setKeycloakId(keycloakId);
+        user.setRole(UserRole.USER);
+
+        //pass token from here, don't create new one
+        keycloakAdminService.assignRealRoleToUser(
+                token,
+                request.username(),
+                "USER",
+                keycloakId
+                );
+
         return userMapper.toResponse(
-                userRepo.save(
-                        userMapper.toEntity(request)
-                )
+                userRepo.save(user)
         );
     }
 

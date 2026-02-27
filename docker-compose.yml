@@ -28,6 +28,18 @@ services:
     networks:
       - backend
     restart: unless-stopped
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8443:8080"
+    command: ["start-dev"]
+    networks:
+      - backend
+    restart: unless-stopped
   rabbitmq:
     container_name: rabbitmq_container
     image: rabbitmq:3-management
