@@ -1,7 +1,5 @@
 .env
 /evaluate-loki/tempo-data
 /evaluate-loki/.data/
-/evaluate-loki/.data/minio
 .idea
 logs
-/evaluate-loki/.data/minio/

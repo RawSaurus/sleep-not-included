@@ -1,6 +1,7 @@
 package com.rawsaurus.sleep_not_included.build.clients;
 
 import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
+import com.rawsaurus.sleep_not_included.build.security.FeignSecurityConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,20 +11,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name="SLEEP-NOT-INCLUDED-TAG")
+@FeignClient(name="SLEEP-NOT-INCLUDED-TAG", configuration = FeignSecurityConfig.class)
 public interface TagClient {
 
     static final String BASE = "/api/v1/tag";
 
-    @GetMapping("/{id}")
+    @GetMapping(BASE + "/{id}")
     public ResponseEntity<TagResponse> findById(@PathVariable Long id);
 
-    @GetMapping("/name/{name}")
+    @GetMapping(BASE + "/name/{name}")
     public ResponseEntity<TagResponse> findByName(@PathVariable String name);
 
-    @GetMapping("/build/{buildId}")
+    @GetMapping(BASE + "/build/{buildId}")
     public ResponseEntity<List<TagResponse>> findAllByBuild(@PathVariable Long buildId);
 
-    @PostMapping("/build/{buildId}")
+    @PostMapping(BASE + "/build/{buildId}")
     public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestParam List<Long> tagIds);
 }

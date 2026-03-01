@@ -48,18 +48,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(exchange -> exchange
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
                                 "/swagger-resources/**",
-                                "/api-docs/**",
-                                "/api/*/v3/api-docs",      // Service-specific docs
-                                "/api/*/swagger-ui/**"      // Service-specific UI
+                                "/api-docs/**"
                         ).permitAll()
-
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/info",
@@ -73,29 +69,6 @@ public class SecurityConfig {
                                 jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
         .build();
     }
-//
-//    @Bean
-//    public CorsFilter corsFilter(){
-//        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        final CorsConfiguration config = new CorsConfiguration();
-//        config.setAllowCredentials(true);
-//        config.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
-//        config.setAllowedHeaders(Arrays.asList(
-//                ORIGIN,
-//                CONTENT_TYPE,
-//                ACCEPT,
-//                AUTHORIZATION
-//        ));
-//        config.setAllowedMethods(Arrays.asList(
-//                "GET",
-//                "POST",
-//                "DELETE",
-//                "PUT",
-//                "PATCH"
-//        ));
-//        source.registerCorsConfiguration("/**", config);
-//        return new CorsFilter(source);
-//    }
 
 //    private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
 //

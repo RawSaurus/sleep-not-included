@@ -123,9 +123,15 @@ public class SecurityConfig {
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt ->{
             List<String> roles = jwt.getClaimAsMap("resource_access")
                     .entrySet().stream()
-                    .filter(entry -> entry.getKey().equals(clientIdFrontend))
-                    .flatMap(entry -> ((Map<String, List<String>>) entry.getValue())
-                            .get("roles").stream())
+                    .filter(entry -> {
+                        System.out.println("entry " + entry.getKey());
+                        return entry.getKey().equals(clientIdFrontend);
+                    })
+                    .flatMap(entry -> {
+                        System.out.println("entry value " + entry.getValue());
+                        return ((Map<String, List<String>>) entry.getValue())
+                            .get("roles").stream();
+                    })
                     .toList();
 
             System.out.println("roles " + roles);

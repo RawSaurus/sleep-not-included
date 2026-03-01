@@ -26,6 +26,10 @@ public class KeycloakAdminService {
     private String clientId;
     @Value("${sni.security.client-uuid}")
     private String clientUuid;
+    @Value("${sni.security.client-id-frontend}")
+    private String clientIdFrontend;
+    @Value("${sni.security.client-uuid-frontend}")
+    private String clientUuidFrontend;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -100,7 +104,7 @@ public class KeycloakAdminService {
 
         HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(List.of(roleRep), headers);
 
-        String url = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/clients/" + clientUuid;
+        String url = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/clients/" + clientUuidFrontend;
 
         ResponseEntity<Void> response = restTemplate.postForEntity(
                 url,
@@ -119,7 +123,7 @@ public class KeycloakAdminService {
         headers.setBearerAuth(token);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
-        String url = keycloakServerUrl + "/admin/realms/" + realm + "/clients/" + clientUuid + "/roles/" + roleName;
+        String url = keycloakServerUrl + "/admin/realms/" + realm + "/clients/" + clientUuidFrontend + "/roles/" + roleName;
         ResponseEntity<Map> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
