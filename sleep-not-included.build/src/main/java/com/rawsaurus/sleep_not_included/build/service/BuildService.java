@@ -160,6 +160,16 @@ public class BuildService {
 //                .map(buildMapper::toResponse);
 //    }
 
+    public List<TagResponse> findAllTagsByBuild(Long buildId){
+        List<BuildTags> buildTags = buildTagsRepo.findAllByBuildId(buildId);
+        List<Long> tagIds = new ArrayList<>();
+
+        for(BuildTags b : buildTags){
+            tagIds.add(b.getTagId());
+        }
+        return tagClient.findAllByIds(tagIds).getBody();
+    }
+
     public Page<BuildResponse> findAllFromUser(Long userId, Pageable pageable){
         var user = userClient.findUserById(userId).getBody();
         if (user == null){

@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/webjars/**",
                                 "/api/*/v3/api-docs",
-                                "/api/v1/actuator/**"
+                                "/api/v2/spans"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

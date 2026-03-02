@@ -14,17 +14,20 @@ import java.util.List;
 @FeignClient(name="SLEEP-NOT-INCLUDED-TAG", configuration = FeignSecurityConfig.class)
 public interface TagClient {
 
-    static final String BASE = "/api/v1/tag";
+    String BASE = "/api/v1/tag";
 
     @GetMapping(BASE + "/{id}")
-    public ResponseEntity<TagResponse> findById(@PathVariable Long id);
+    ResponseEntity<TagResponse> findById(@PathVariable Long id);
 
     @GetMapping(BASE + "/name/{name}")
-    public ResponseEntity<TagResponse> findByName(@PathVariable String name);
+    ResponseEntity<TagResponse> findByName(@PathVariable String name);
 
     @GetMapping(BASE + "/build/{buildId}")
-    public ResponseEntity<List<TagResponse>> findAllByBuild(@PathVariable Long buildId);
+    ResponseEntity<List<TagResponse>> findAllByBuild(@PathVariable Long buildId);
+
+    @GetMapping(BASE + "/find-all-by-ids")
+    ResponseEntity<List<TagResponse>> findAllByIds(@RequestParam List<Long> ids);
 
     @PostMapping(BASE + "/build/{buildId}")
-    public ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestParam List<Long> tagIds);
+    ResponseEntity<?> addTagsToBuild(@PathVariable Long buildId, @RequestParam List<Long> tagIds);
 }

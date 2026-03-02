@@ -53,6 +53,13 @@ public class TagService {
                 .map(tagMapper::toResponse);
     }
 
+    public List<TagResponse> findAllByIds(List<Long> ids){
+        return tagRepo.findAllById(ids)
+                .stream()
+                .map(tagMapper::toResponse)
+                .toList();
+    }
+
     public TagResponse createTag(TagRequest request){
         return tagMapper.toResponse(
                 tagRepo.save(

@@ -17,10 +17,16 @@ import jakarta.persistence.EntityNotFoundException;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -91,12 +97,12 @@ public class ImageService {
         }
     }
 
-    public List<Resource> downloadBuildImages(String name){
+    public MultiValueMap<String, Object> downloadBuildImages(String name){
         ImageType type = BUILD_IMAGE;
         OwnerData ownerData = checkOwner(type, name);
 
         List<Image> images = imageRepo.findAllByStoragePathAndOwnerId(ownerData.location().toString(), ownerData.id());
-        List<Resource> resources = new ArrayList<>();
+        MultiValueMap<String, Object> resources = new LinkedMultiValueMap<>();
 
         for(Image image : images) {
             try {
@@ -104,7 +110,10 @@ public class ImageService {
                 System.out.print(filePath);
                 Resource resource = new UrlResource(filePath.toUri());
                 if (resource.exists()) {
-                    resources.add(resource);
+                    HttpHeaders partHeaders = new HttpHeaders();
+                    partHeaders.setContentType(MediaType.IMAGE_JPEG);
+                    resources.add("images", new HttpEntity<>(resource, partHeaders));
+//                    resources.add(resource);
                 } else {
                     throw new StorageException("File " + filePath + " could not be found");
                 }
@@ -139,7 +148,7 @@ public class ImageService {
 
     @Transactional
     public String uploadImage(MultipartFile file, ImageType type, String name){
-        if(!file.isEmpty()){
+        if(file.isEmpty()){
             throw new StorageException("No image provided");
         }
         if(!file.getContentType().equals("image/jpeg")){
@@ -182,7 +191,7 @@ public class ImageService {
 
     @Transactional
     public String uploadBuildImages(List<MultipartFile> files, String name){
-        if(!files.get(0).isEmpty()){
+        if(files.get(0).isEmpty()){
             throw new StorageException("No image provided");
         }
 

@@ -3,6 +3,7 @@ package com.rawsaurus.sleep_not_included.build.controller;
 import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
 import com.rawsaurus.sleep_not_included.build.dto.BuildResLoggedIn;
 import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
+import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
 import com.rawsaurus.sleep_not_included.build.service.BuildService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +102,11 @@ public class BuildController {
     ){
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         return ResponseEntity.ok(buildService.findAllLikedBuilds(userId, pageable));
+    }
+
+    @GetMapping("/{buildId}/tags")
+    public ResponseEntity<List<TagResponse>> findTagsByBuild(@PathVariable Long buildId){
+        return ResponseEntity.ok(buildService.findAllTagsByBuild(buildId));
     }
 
     @PostMapping("/{userId}")

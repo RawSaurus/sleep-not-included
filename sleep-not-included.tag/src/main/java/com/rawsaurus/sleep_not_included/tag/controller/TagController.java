@@ -49,6 +49,11 @@ public class TagController {
         return ResponseEntity.ok(tagService.findAll(pageable));
     }
 
+    @GetMapping("/find-all-by-ids")
+    public ResponseEntity<List<TagResponse>> findAllByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(tagService.findAllByIds(ids));
+    }
+
     @PostMapping
     public ResponseEntity<TagResponse> createTag(@Valid @RequestBody TagRequest request){
         return ResponseEntity.ok(tagService.createTag(request));

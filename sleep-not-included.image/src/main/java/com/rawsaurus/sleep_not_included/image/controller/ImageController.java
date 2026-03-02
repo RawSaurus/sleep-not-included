@@ -9,6 +9,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,12 +39,12 @@ public class ImageController {
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadImage(type, name));
     }
 
-    @GetMapping(value = "/download/build-images/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public ResponseEntity<List<Resource>> downloadBuildImages(@PathVariable String name){
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadBuildImages(name));
+    @GetMapping(value = "/download/build-images/{name}", produces = MediaType.MULTIPART_MIXED_VALUE)
+    public ResponseEntity<MultiValueMap<String, Object>> downloadBuildImages(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.MULTIPART_MIXED).body(imageService.downloadBuildImages(name));
     }
 
-    @PostMapping(value = "/upload/{name}")
+    @PostMapping(value = "/upload/{name}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> uploadImage(
             @RequestParam MultipartFile file,
             @RequestParam ImageType type,
@@ -52,15 +53,15 @@ public class ImageController {
         return ResponseEntity.ok(imageService.uploadImage(file, type, name));
     }
 
-    @PostMapping("/upload/build-images/{name}")
-    public ResponseEntity<?> uploadTest(
+    @PostMapping(value = "/upload/build-images/{name}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> uploadBuildImages(
             @RequestParam List<MultipartFile> files,
             @PathVariable String name
     ){
         return ResponseEntity.ok(imageService.uploadBuildImages(files, name));
     }
 
-    @PutMapping("/update/{name}")
+    @PutMapping(value = "/update/{name}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateImage(
             @RequestParam MultipartFile file,
             @RequestParam ImageType type,
