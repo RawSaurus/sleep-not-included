@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/user/search/adm"
+method: GET
+order: 4000

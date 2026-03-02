@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{gatewayBU}}/comment/1/1/1"
+method: PUT
+body:
+  type: json
+  content: "{\r\n    \"body\": \"Test upd\""
+order: 9000

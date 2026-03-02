@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{gatewayBU}}/build/liked/1?page=0&size=3&sort&sort-direction"
+method: GET
+queryParams:
+  page: "0"
+  size: "3"
+  sort: null
+  sort-direction: null
+order: 9000

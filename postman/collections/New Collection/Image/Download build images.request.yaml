@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/image/download/build-images/build"
+method: GET
+order: 4000

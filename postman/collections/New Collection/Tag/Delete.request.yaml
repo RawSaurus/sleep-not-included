@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/tag/1"
+method: DELETE
+order: 7000

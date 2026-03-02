@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{gatewayBU}}/image/upload/build-images/build"
+method: POST
+queryParams:
+  - key: file
+    value: null
+    disabled: true
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: postman-cloud:///1f10b66f-fef5-4240-92a0-7883bc6ad88a
+order: 6000

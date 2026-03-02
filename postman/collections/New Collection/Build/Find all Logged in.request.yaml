@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{gatewayBU}}/build/logged/1?page=0&size=5&sort&sort-direction"
+method: GET
+queryParams:
+  page: "0"
+  size: "5"
+  sort: null
+  sort-direction: null
+order: 6000

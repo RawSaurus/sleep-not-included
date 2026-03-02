@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/build/like/1/1"
+method: POST
+order: 11000

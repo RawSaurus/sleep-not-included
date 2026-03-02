@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/build/name/build"
+method: GET
+order: 3000

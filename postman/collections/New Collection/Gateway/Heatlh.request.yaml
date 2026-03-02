@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/api/v3/api-docs"
+method: GET
+order: 1000

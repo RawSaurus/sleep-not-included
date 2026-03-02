@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{gatewayBU}}/comment/respond/1/3"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"body\": \"Test\"\r\n}"
+order: 7000

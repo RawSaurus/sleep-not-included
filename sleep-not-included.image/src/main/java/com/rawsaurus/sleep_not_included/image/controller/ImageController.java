@@ -28,22 +28,22 @@ public class ImageController {
         return message;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ImageResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(imageService.findById(id));
     }
 
-    @GetMapping("/download/{name}")
+    @GetMapping(value = "/download/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<Resource> downloadImage(@RequestParam ImageType type, @PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadImage(type, name));
     }
 
-    @GetMapping("/download/build-images/{name}")
+    @GetMapping(value = "/download/build-images/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<List<Resource>> downloadBuildImages(@PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadBuildImages(name));
     }
 
-    @PostMapping("/upload/{name}")
+    @PostMapping(value = "/upload/{name}")
     public ResponseEntity<?> uploadImage(
             @RequestParam MultipartFile file,
             @RequestParam ImageType type,

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{tagBU}}/name/tag"
+method: GET
+order: 2000

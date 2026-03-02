@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{gatewayBU}}/build/2"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"build1\",\r
+
+    \    \"description\": \"test\",\r
+
+    \    \"tagId\": []\r
+
+    }"
+order: 10000

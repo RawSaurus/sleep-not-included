@@ -54,6 +54,27 @@ public class KeycloakAdminService {
         return response.getBody().get("access_token").toString();
     }
 
+    public Map getUserById(String keycloakId){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(getAdminAccessToken());
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        String url = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + keycloakId;
+        ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Map.class
+        );
+
+        if(!response.getStatusCode().is2xxSuccessful()){
+            throw new RuntimeException("HTTP: " + response.getStatusCode());
+        }
+
+        return response.getBody();
+    }
+
     public String createUser(String token, UserRequest request){
 
         HttpHeaders headers = new HttpHeaders();

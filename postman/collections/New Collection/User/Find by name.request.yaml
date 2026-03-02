@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/user/name/admin"
+method: GET
+order: 3000

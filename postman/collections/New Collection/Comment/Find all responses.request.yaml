@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{gatewayBU}}/comment/responses/1?page&size&sort&sort-direction"
+method: GET
+queryParams:
+  page: null
+  size: null
+  sort: null
+  sort-direction: null
+order: 5000

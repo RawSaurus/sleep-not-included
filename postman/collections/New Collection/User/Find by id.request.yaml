@@ -1,0 +1,9 @@
+$kind: http-request
+name: Find by id
+url: "{{gatewayBU}}/user/1"
+method: GET
+auth:
+  type: inherit
+  credentials:
+    id: collection-099c504b24e5BB917A6B75ba-oauth2
+order: 2000

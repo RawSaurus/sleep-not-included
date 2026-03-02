@@ -14,15 +14,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/user")
+@RequestMapping(value = "/user", produces = MediaType.APPLICATION_JSON_VALUE)
 @Log
 public class UserController {
 
@@ -31,10 +33,9 @@ public class UserController {
     @Value("${sni.message}")
     private String message;
 
-    @GetMapping("/test")
-    public String test(){
-        log.warning("test msg");
-        return message;
+    @GetMapping("/test/{id}")
+    public String test(@PathVariable String id){
+        return userService.test(id);
     }
 
     @GetMapping("/{userId}")
@@ -55,6 +56,11 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request){
         return ResponseEntity.ok(userService.createUser(request));
+    }
+
+    @PostMapping("/check-keycloak-and-create/{keycloakId}")
+    public ResponseEntity<String> checkKeycloakAndCreateUser(@PathVariable String keycloakId){
+        return ResponseEntity.ok(userService.checkKeycloakAndCreateUser(keycloakId));
     }
 
     @PutMapping("/{userId}")

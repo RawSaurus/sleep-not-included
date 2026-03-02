@@ -31,6 +31,10 @@ public class UserService {
 
     private final RabbitTemplate rabbitTemplate;
 
+    public String test(String id){
+        return keycloakAdminService.getUserById(id).toString();
+    }
+
     public UserResponse findUser(Long userId){
         return userMapper.toResponse(
                 userRepo.findById(userId)
@@ -72,6 +76,26 @@ public class UserService {
         return userMapper.toResponse(
                 userRepo.save(user)
         );
+    }
+
+    public String checkKeycloakAndCreateUser(String keycloakId){
+        if(userRepo.findByKeycloakId(keycloakId).isPresent()){
+            return "User already exists";
+        }
+
+        var keycloakUser = keycloakAdminService.getUserById(keycloakId);
+        if(keycloakUser == null){
+            throw new EntityNotFoundException("Keycloak user not found");
+        }
+
+        User user = new User();
+        user.setKeycloakId(keycloakId);
+        user.setUsername((String) keycloakUser.get("username"));
+        user.setEmail((String) keycloakUser.get("email"));
+        user.setRole(UserRole.USER);
+
+        userRepo.save(user);
+        return "User created successfully";
     }
 
     public UserResponse updateUser(Long userId, UserRequest request){

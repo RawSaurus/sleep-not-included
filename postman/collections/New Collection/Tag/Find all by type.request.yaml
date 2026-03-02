@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/tag/type/DLC"
+method: GET
+order: 3000

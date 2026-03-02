@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{gatewayBU}}/image/download/admin?type=PROFILE_PIC"
+method: GET
+queryParams:
+  type: PROFILE_PIC
+order: 3000

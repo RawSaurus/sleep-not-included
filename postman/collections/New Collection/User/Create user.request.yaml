@@ -1,0 +1,20 @@
+$kind: http-request
+name: Create user
+url: "{{gatewayBU}}/user/create"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"username\": \"admin3\",\r
+
+    \    \"email\": \"mail@mail3.com\",\r
+
+    \    \"password\": \"69696969\" \r
+
+    }"
+auth:
+  type: inherit
+  credentials:
+    id: collection-099c504b24e5BB917A6B75ba-oauth2
+order: 5000

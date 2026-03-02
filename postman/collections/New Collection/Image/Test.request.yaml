@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{gatewayBU}}/image/test"
+method: GET
+order: 1000

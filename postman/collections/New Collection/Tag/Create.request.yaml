@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{gatewayBU}}/tag"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"tag\",\r
+
+    \    \"type\": \"DLC\"\r
+
+    }"
+order: 5000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{gatewayBU}}/user/3"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \    \"username\": \"admin\",\r
+
+    \    \"email\": \"mailupd@gmail.com\",\r
+
+    \    \"password\": \"69696969\" \r
+
+    }"
+order: 6000

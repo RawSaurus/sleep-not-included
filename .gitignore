@@ -1,5 +1,6 @@
 .env
 /evaluate-loki/tempo-data
 /evaluate-loki/.data/
+/postman/collections/New Collection/.resources
 .idea
 logs

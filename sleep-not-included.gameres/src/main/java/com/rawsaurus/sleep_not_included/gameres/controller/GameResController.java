@@ -5,12 +5,13 @@ import com.rawsaurus.sleep_not_included.gameres.dto.GameResResponse;
 import com.rawsaurus.sleep_not_included.gameres.service.GameResService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/res")
+@RequestMapping(value = "/res", produces = MediaType.APPLICATION_JSON_VALUE)
 public class GameResController {
 
     private final GameResService gameResService;
