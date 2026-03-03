@@ -25,6 +25,7 @@ public class Image {
     @Column(nullable = false)
     private ImageType type;
     private long size;
+    private String url;
     private String storagePath;
     private String ownerService;
     private Long ownerId;

@@ -7,6 +7,7 @@ public record ImageResponse(
         String filename,
         String type,
         Double size,
+        String url,
         String storagePath,
         Long ownerId,
         LocalDateTime createdAt

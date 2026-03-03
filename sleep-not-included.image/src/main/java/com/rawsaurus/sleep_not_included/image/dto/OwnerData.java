@@ -6,6 +6,8 @@ public record OwnerData(
         Long id,
         String name,
         String ownerService,
-        Path location
+        Path location,
+        int width,
+        int height
 ) {
 }

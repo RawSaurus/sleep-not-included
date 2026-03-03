@@ -52,6 +52,21 @@ services:
     networks:
       - backend
     restart: unless-stopped
+  minio:
+    container_name: minio_container
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    ports:
+      - "9002:9000"   # S3 API — used by your image service
+      - "9003:9001"   # Web console — browse buckets at localhost:9001
+    volumes:
+      - minio_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
 
 networks:
   backend:
@@ -60,3 +75,4 @@ networks:
 volumes:
   postgres:
   pgadmin:
+  minio_data:
