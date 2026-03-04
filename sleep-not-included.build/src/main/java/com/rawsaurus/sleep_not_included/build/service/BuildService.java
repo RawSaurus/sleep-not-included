@@ -1,5 +1,6 @@
 package com.rawsaurus.sleep_not_included.build.service;
 
+import com.rawsaurus.sleep_not_included.build.clients.ImageClient;
 import com.rawsaurus.sleep_not_included.build.clients.TagClient;
 import com.rawsaurus.sleep_not_included.build.clients.UserClient;
 import com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig;
@@ -39,6 +40,7 @@ public class BuildService {
 
     private final UserClient userClient;
     private final TagClient tagClient;
+    private final ImageClient imageClient;
 
     private final BuildMapper buildMapper;
     private final RabbitTemplate rabbitTemplate;
@@ -83,6 +85,37 @@ public class BuildService {
         return buildMapper.toResponse(
                 buildRepo.findByName(name)
                         .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+        );
+    }
+
+    public BuildDetailResponse findBuildDetailsById(Long id){
+        Build build = buildRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+        String creatorUsername = userClient.findUserById(build.getCreatorId()).getBody().username();
+        List<ImageResponse> imageUrls = imageClient.findByOwner("build", build.getId()).getBody();
+        List<TagResponse> tags = tagClient.findAllByIds(
+                buildTagsRepo.findAllByBuildId(build.getId())
+                        .stream().map(BuildTags::getTagId).toList()
+        ).getBody();
+
+        String thumbnailUrl = "";
+        for(ImageResponse i : imageUrls){
+            if(i.type().equals("BUILD_THUMBNAIL")){
+                thumbnailUrl = i.url();
+                imageUrls.remove(i);
+                break;
+            }
+        }
+        return new BuildDetailResponse(
+                build.getId(),
+                build.getName(),
+                build.getDescription(),
+                build.getLikes(),
+                build.getCreatedAt(),
+                creatorUsername,
+                thumbnailUrl,
+                imageUrls.stream().map(ImageResponse::url).toList(),
+                tags
         );
     }
 

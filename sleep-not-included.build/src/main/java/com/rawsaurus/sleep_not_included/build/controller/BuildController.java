@@ -1,9 +1,6 @@
 package com.rawsaurus.sleep_not_included.build.controller;
 
-import com.rawsaurus.sleep_not_included.build.dto.BuildRequest;
-import com.rawsaurus.sleep_not_included.build.dto.BuildResLoggedIn;
-import com.rawsaurus.sleep_not_included.build.dto.BuildResponse;
-import com.rawsaurus.sleep_not_included.build.dto.TagResponse;
+import com.rawsaurus.sleep_not_included.build.dto.*;
 import com.rawsaurus.sleep_not_included.build.service.BuildService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +40,11 @@ public class BuildController {
     @GetMapping("/search/{name}")
     public ResponseEntity<List<BuildResponse>> suggestSearch(@PathVariable String name){
         return ResponseEntity.ok(buildService.suggestSearch(name));
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<BuildDetailResponse> findBuildDetailsById(@PathVariable Long id){
+        return ResponseEntity.ok(buildService.findBuildDetailsById(id));
     }
 
     @GetMapping

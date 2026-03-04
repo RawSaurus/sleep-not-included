@@ -48,17 +48,24 @@ public class TagService {
                 .toList();
     }
 
+    public List<TagResponse> findAllByIds(List<Long> ids) {
+        return tagRepo.findAllByIdIn(ids)
+                .stream()
+                .map(tagMapper::toResponse)
+                .toList();
+    }
+
     public Page<TagResponse> findAll(Pageable pageable){
         return tagRepo.findAll(pageable)
                 .map(tagMapper::toResponse);
     }
 
-    public List<TagResponse> findAllByIds(List<Long> ids){
-        return tagRepo.findAllById(ids)
-                .stream()
-                .map(tagMapper::toResponse)
-                .toList();
-    }
+//    public List<TagResponse> findAllByIds(List<Long> ids){
+//        return tagRepo.findAllById(ids)
+//                .stream()
+//                .map(tagMapper::toResponse)
+//                .toList();
+//    }
 
     public TagResponse createTag(TagRequest request){
         return tagMapper.toResponse(

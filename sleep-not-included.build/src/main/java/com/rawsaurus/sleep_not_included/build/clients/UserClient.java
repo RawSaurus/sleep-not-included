@@ -12,6 +12,8 @@ import org.springframework.web.service.annotation.HttpExchange;
 @FeignClient(name="SLEEP-NOT-INCLUDED-USER", configuration = FeignSecurityConfig.class)
 public interface UserClient {
 
-    @GetMapping("/api/v1/user/{userId}")
+    String BASE = "/api/v1/user";
+
+    @GetMapping(BASE + "/{userId}")
     ResponseEntity<UserResponse> findUserById(@PathVariable Long userId);
 }
