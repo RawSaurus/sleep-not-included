@@ -92,6 +92,13 @@ public class ImageService {
                 .toList();
     }
 
+    public List<ImageResponse> findAllByOwnerIds(String ownerService, List<Long> ids){
+        return imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerIdIn(ownerService, ids)
+                .stream()
+                .map(imageMapper::toResponse)
+                .toList();
+    }
+
     public Resource downloadImage(ImageType type, String name){
 
         OwnerData ownerData = checkOwner(type, name);

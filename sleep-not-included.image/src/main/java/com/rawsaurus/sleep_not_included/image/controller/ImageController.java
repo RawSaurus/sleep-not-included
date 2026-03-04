@@ -39,6 +39,11 @@ public class ImageController {
         return ResponseEntity.ok(imageService.findByOwner(ownerService, ownerId));
     }
 
+    @GetMapping("/owner/{ownerService}/batch")
+    public ResponseEntity<List<ImageResponse>> findAllByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds){
+        return ResponseEntity.ok(imageService.findAllByOwnerIds(ownerService, ownerIds));
+    }
+
     @GetMapping(value = "/download/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<Resource> downloadImage(@RequestParam ImageType type, @PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadImage(type, name));

@@ -119,6 +119,31 @@ public class BuildService {
         );
     }
 
+    public Page<BuildDetailResponse> findAllBuildDetails(Pageable pageable) {
+        Page<Build> builds = buildRepo.findAll(pageable);
+        List<Build> content = builds.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> buildIds = extractBuildIds(content);
+        List<Long> creatorIds = extractCreatorIds(content);
+
+        System.out.println(creatorIds);
+
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        System.out.println(usernameByCreatorId);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
+
+        List<BuildDetailResponse> responses = content.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, builds.getTotalElements());
+    }
+
     public List<BuildResponse> suggestSearch(String name){
         Pageable pageable = PageRequest.of(0, 5);
         return buildRepo.searchBuilds(name, pageable)
@@ -379,5 +404,74 @@ public class BuildService {
     @Transactional
     public void deleteTagsFromBuild(DeleteEntityEvent event){
         buildTagsRepo.deleteAllByTagId(event.id());
+    }
+
+    private List<Long> extractBuildIds(List<Build> builds) {
+        return builds.stream().map(Build::getId).toList();
+    }
+
+    private List<Long> extractCreatorIds(List<Build> builds) {
+        return builds.stream().map(Build::getCreatorId).toList();
+    }
+
+    private Map<Long, String> fetchUsernamesByIds(List<Long> creatorIds) {
+        List<UserResponse> users = userClient.findAllByIds(creatorIds).getBody();
+        if (users == null) return Map.of();
+        return users.stream().collect(Collectors.toMap(UserResponse::id, UserResponse::username));
+    }
+
+    private Map<Long, List<ImageResponse>> fetchImagesByBuildIds(List<Long> buildIds) {
+        List<ImageResponse> allImages = imageClient.findAllByOwnerIds("build", buildIds).getBody();
+        if (allImages == null) return Map.of();
+        return allImages.stream().collect(Collectors.groupingBy(ImageResponse::ownerId));
+    }
+
+    private Map<Long, List<TagResponse>> fetchTagsByBuildIds(List<Long> buildIds) {
+        List<BuildTags> allBuildTags = buildTagsRepo.findAllByBuildIdIn(buildIds);
+
+        List<Long> tagIds = allBuildTags.stream().map(BuildTags::getTagId).distinct().toList();
+        if (tagIds.isEmpty()) return Map.of();
+
+        List<TagResponse> allTags = tagClient.findAllByIds(tagIds).getBody();
+        if (allTags == null) return Map.of();
+
+        Map<Long, TagResponse> tagById = allTags.stream()
+                .collect(Collectors.toMap(TagResponse::id, t -> t));
+
+        return allBuildTags.stream().collect(Collectors.groupingBy(
+                BuildTags::getBuildId,
+                Collectors.mapping(bt -> tagById.get(bt.getTagId()), Collectors.toList())
+        ));
+    }
+
+    private BuildDetailResponse toBuildDetailResponse(
+            Build build,
+            Map<Long, String> usernameByCreatorId,
+            Map<Long, List<ImageResponse>> imagesByBuildId,
+            Map<Long, List<TagResponse>> tagsByBuildId
+    ) {
+        List<ImageResponse> images = imagesByBuildId.getOrDefault(build.getId(), List.of());
+        String thumbnailUrl = "";
+        List<String> otherImageUrls = new ArrayList<>();
+
+        for (ImageResponse image : images) {
+            if ("BUILD_THUMBNAIL".equals(image.type()) && thumbnailUrl.isEmpty()) {
+                thumbnailUrl = image.url();
+            } else {
+                otherImageUrls.add(image.url());
+            }
+        }
+
+        return new BuildDetailResponse(
+                build.getId(),
+                build.getName(),
+                build.getDescription(),
+                build.getLikes(),
+                build.getCreatedAt(),
+                usernameByCreatorId.getOrDefault(build.getCreatorId(), ""),
+                thumbnailUrl,
+                otherImageUrls,
+                tagsByBuildId.getOrDefault(build.getId(), List.of())
+        );
     }
 }

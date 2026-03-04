@@ -47,6 +47,18 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findBuildDetailsById(id));
     }
 
+
+    @GetMapping("/all/test")
+    public ResponseEntity<Page<BuildDetailResponse>> findAllTest(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+    ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return ResponseEntity.ok(buildService.findAllBuildDetails(pageable));
+    }
+
     @GetMapping
     public ResponseEntity<Page<BuildResponse>> findAll(
             @RequestParam(value = "page", defaultValue = "0") Integer page,

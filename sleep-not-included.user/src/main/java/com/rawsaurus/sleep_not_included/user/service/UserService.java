@@ -42,6 +42,13 @@ public class UserService {
         );
     }
 
+    public List<UserResponse> findAllByIds(List<Long> ids){
+        return userRepo.findAllByIdIn(ids)
+                .stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
     public UserResponse findUserByName(String username){
         return userMapper.toResponse(
                 userRepo.findByUsername(username)

@@ -7,6 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,4 +21,7 @@ public interface ImageClient {
 
     @GetMapping(BASE + "/owner/{ownerService}/{ownerId}")
     ResponseEntity<List<ImageResponse>> findByOwner(@PathVariable String ownerService, @PathVariable Long ownerId);
+
+    @GetMapping(BASE + "/owner/{ownerService}/batch")
+    ResponseEntity<List<ImageResponse>> findAllByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds);
 }

@@ -25,6 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             LENGTH(u.username)
 """)
     List<User> searchUsers(@Param("username") String username, Pageable pageable);
+    List<User> findAllByIdIn(List<Long> ids);
 
     Page<User> findAllByusernameLikeIgnoreCase(String username, Pageable pageable);
 }
