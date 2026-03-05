@@ -22,4 +22,7 @@ public interface UserClient {
 
     @GetMapping(BASE + "/find-all-by-ids")
     ResponseEntity<List<UserResponse>> findAllByIds(@RequestParam List<Long> ids);
+
+    @GetMapping(BASE + "/keycloak/{keycloakId}")
+    ResponseEntity<UserResponse> findUserByKeycloakId(@PathVariable String keycloakId);
 }

@@ -53,6 +53,11 @@ public class UserController {
         return ResponseEntity.ok(userService.findUserByName(username));
     }
 
+    @GetMapping("/keycloak/{keycloakId}")
+    public ResponseEntity<UserResponse> findUserByKeycloakId(@PathVariable String keycloakId){
+        return ResponseEntity.ok(userService.findUserByKeycloakId(keycloakId));
+    }
+
     @GetMapping("/search/{username}")
     public ResponseEntity<List<UserResponse>> findUsersByNameLike(@PathVariable String username){
         return ResponseEntity.ok(userService.findUsersByNameLike(username));

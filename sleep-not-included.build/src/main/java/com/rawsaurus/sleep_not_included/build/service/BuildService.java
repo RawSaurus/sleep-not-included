@@ -17,11 +17,16 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerProperties;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,7 +74,7 @@ public class BuildService {
         );
     }
 
-    public BuildResponse findByName(String name){
+//    public BuildResponse findByName(String name){
 //        Build build = buildRepo.findByName(name)
 //                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
 //        List<TagResponse> tags = tagClient.findAllByBuild(build.getId()).getBody();
@@ -82,10 +87,23 @@ public class BuildService {
 //                build.getCreatorId(),
 //                build.getLikes()
 //        );
-        return buildMapper.toResponse(
-                buildRepo.findByName(name)
-                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
-        );
+//        return buildMapper.toResponse(
+//                buildRepo.findByName(name)
+//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//        );
+//    }
+
+    public BuildDetailResponse findByName(String name){
+        Build build = buildRepo.findByName(name)
+                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
+        String creatorUsername = userClient.findUserById(build.getCreatorId()).getBody().username();
+        List<ImageResponse> imageUrls = imageClient.findByOwner("build", build.getId()).getBody();
+        List<TagResponse> tags = tagClient.findAllByIds(
+                buildTagsRepo.findAllByBuildId(build.getId())
+                        .stream().map(BuildTags::getTagId).toList()
+        ).getBody();
+
+        return toBuildDetailResponse(build, creatorUsername, imageUrls, tags);
     }
 
     public BuildDetailResponse findBuildDetailsById(Long id){
@@ -98,25 +116,7 @@ public class BuildService {
                         .stream().map(BuildTags::getTagId).toList()
         ).getBody();
 
-        String thumbnailUrl = "";
-        for(ImageResponse i : imageUrls){
-            if(i.type().equals("BUILD_THUMBNAIL")){
-                thumbnailUrl = i.url();
-                imageUrls.remove(i);
-                break;
-            }
-        }
-        return new BuildDetailResponse(
-                build.getId(),
-                build.getName(),
-                build.getDescription(),
-                build.getLikes(),
-                build.getCreatedAt(),
-                creatorUsername,
-                thumbnailUrl,
-                imageUrls.stream().map(ImageResponse::url).toList(),
-                tags
-        );
+        return toBuildDetailResponse(build, creatorUsername, imageUrls, tags);
     }
 
     public Page<BuildDetailResponse> findAllBuildDetails(Pageable pageable) {
@@ -130,10 +130,7 @@ public class BuildService {
         List<Long> buildIds = extractBuildIds(content);
         List<Long> creatorIds = extractCreatorIds(content);
 
-        System.out.println(creatorIds);
-
         Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
-        System.out.println(usernameByCreatorId);
         Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
         Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
 
@@ -144,6 +141,55 @@ public class BuildService {
         return new PageImpl<>(responses, pageable, builds.getTotalElements());
     }
 
+    public Page<BuildDetailResponse> findAllBuildDetailsByName(String name, Pageable pageable) {
+        List<Build> content = buildRepo.searchBuilds(name, pageable);
+//        List<Build> content = builds.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> buildIds = extractBuildIds(content);
+        List<Long> creatorIds = extractCreatorIds(content);
+
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
+
+        List<BuildDetailResponse> responses = content.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, content.size());
+    }
+
+    public Page<BuildDetailResponse> findAllBuildDetailsByTags(List<TagResponse> tags, Pageable pageable) {
+        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
+        Page<BuildTags> buildTags = buildTagsRepo.findAllByTagIdIn(tagIds, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        Page<Build> builds = buildRepo.findAllByIdIn(
+                buildTags.getContent().stream().map(BuildTags::getBuildId).toList(),
+                pageable
+        );
+        List<Build> content = builds.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> buildIds = extractBuildIds(content);
+        List<Long> creatorIds = extractCreatorIds(content);
+
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
+
+        List<BuildDetailResponse> responses = content.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, content.size());
+    }
+
     public List<BuildResponse> suggestSearch(String name){
         Pageable pageable = PageRequest.of(0, 5);
         return buildRepo.searchBuilds(name, pageable)
@@ -152,39 +198,51 @@ public class BuildService {
                 .toList();
     }
 
-    public List<BuildResponse> filterSearch(List<Long> tagIds, String name){
-        //
-        return null;
-    }
+        //would be too bad on performance, solve by join on tables
+//    public Page<BuildDetailResponse> findAllWithFilters(String name, List<TagResponse> tags, Pageable pageable){
+//        //nothing
+//        if((name == null || name.isEmpty()) && (tags == null || tags.isEmpty())){
+//            return findAllBuildDetails(pageable);
+//        }
+//        //name
+//        if(tags == null || tags.isEmpty()) {
+//            return findAllBuildDetailsByName(name, pageable);
+//        }
+//        //tag
+//        if(name == null || name.isEmpty()) {
+//            return findAllBuildDetailsByTags(tags, pageable);
+//        }
+//        //name && tags
+//        return null;
+//    }
 
-    public Page<BuildResponse> findAll(Pageable pageable){
-        return buildRepo.findAll(pageable)
-                .map(buildMapper::toResponse);
-    }
+//    public Page<BuildResponse> findAll(Pageable pageable){
+//        return buildRepo.findAll(pageable)
+//                .map(buildMapper::toResponse);
+//    }
 
-    public Page<BuildResLoggedIn> findAllLoggedIn(Long userId, Pageable pageable){
-        var user = userClient.findUserById(userId).getBody();
-        if (user == null){
-            throw new EntityNotFoundException("User not found");
-        }
-
-        Page<Build> builds = buildRepo.findAll(pageable);
-        List<BuildResLoggedIn> res = new ArrayList<>();
-
-        for(Build b : builds.getContent()){
-            res.add(
-                    new BuildResLoggedIn(
-                            b.getId(),
-                            b.getName(),
-                            b.getDescription(),
-                            b.getCreatorId(),
-                            b.getLikes(),
-                            likedBuildsRepo.existsByUserIdAndBuildId(userId, b.getId())
-                    )
-            );
-        }
-        return new PageImpl<>(res);
-    }
+//    public Page<BuildResLoggedIn> findAllLoggedIn(Long userId, Pageable pageable){ var user = userClient.findUserById(userId).getBody();
+//        if (user == null){
+//            throw new EntityNotFoundException("User not found");
+//        }
+//
+//        Page<Build> builds = buildRepo.findAll(pageable);
+//        List<BuildResLoggedIn> res = new ArrayList<>();
+//
+//        for(Build b : builds.getContent()){
+//            res.add(
+//                    new BuildResLoggedIn(
+//                            b.getId(),
+//                            b.getName(),
+//                            b.getDescription(),
+//                            b.getCreatorId(),
+//                            b.getLikes(),
+//                            likedBuildsRepo.existsByUserIdAndBuildId(userId, b.getId())
+//                    )
+//            );
+//        }
+//        return new PageImpl<>(res);
+//    }
 
 //    public List<BuildTags> findAllBuildsByTags(List<Tag> tags){
 //        return null;
@@ -446,6 +504,43 @@ public class BuildService {
 
     private BuildDetailResponse toBuildDetailResponse(
             Build build,
+            String username,
+            List<ImageResponse> imagesRes,
+            List<TagResponse> tagsRes
+    ) {
+//        List<ImageResponse> images = imagesByBuildId.getOrDefault(build.getId(), List.of());
+        String thumbnailUrl = "";
+        List<String> otherImageUrls = new ArrayList<>();
+
+        for (ImageResponse image : imagesRes) {
+            if ("BUILD_THUMBNAIL".equals(image.type()) && thumbnailUrl.isEmpty()) {
+                thumbnailUrl = image.url();
+            } else {
+                otherImageUrls.add(image.url());
+            }
+        }
+
+        Long userId = resolveUserId();
+        Boolean isLiked = userId != null
+                ? likedBuildsRepo.existsByUserIdAndBuildId(userId, build.getId())
+                : null;
+
+        return new BuildDetailResponse(
+                build.getId(),
+                build.getName(),
+                build.getDescription(),
+                build.getLikes(),
+                build.getCreatedAt(),
+                username,
+                thumbnailUrl,
+                otherImageUrls,
+                tagsRes,
+                isLiked
+        );
+    }
+
+    private BuildDetailResponse toBuildDetailResponse(
+            Build build,
             Map<Long, String> usernameByCreatorId,
             Map<Long, List<ImageResponse>> imagesByBuildId,
             Map<Long, List<TagResponse>> tagsByBuildId
@@ -462,6 +557,11 @@ public class BuildService {
             }
         }
 
+        Long userId = resolveUserId();
+        Boolean isLiked = userId != null
+                ? likedBuildsRepo.existsByUserIdAndBuildId(userId, build.getId())
+                : null;
+
         return new BuildDetailResponse(
                 build.getId(),
                 build.getName(),
@@ -471,7 +571,20 @@ public class BuildService {
                 usernameByCreatorId.getOrDefault(build.getCreatorId(), ""),
                 thumbnailUrl,
                 otherImageUrls,
-                tagsByBuildId.getOrDefault(build.getId(), List.of())
+                tagsByBuildId.getOrDefault(build.getId(), List.of()),
+                isLiked
         );
+    }
+
+    private Long resolveUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String keycloakId = jwt.getSubject(); // "sub" claim
+        var user = userClient.findUserByKeycloakId(keycloakId).getBody();
+        return user != null ? user.id() : null;
     }
 }

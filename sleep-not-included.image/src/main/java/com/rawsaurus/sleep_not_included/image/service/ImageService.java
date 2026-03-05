@@ -92,10 +92,24 @@ public class ImageService {
                 .toList();
     }
 
+    public List<String> findUrlByOwner(String ownerService, Long ownerId){
+        return imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerId(ownerService, ownerId)
+                .stream()
+                .map(Image::getUrl)
+                .toList();
+    }
+
     public List<ImageResponse> findAllByOwnerIds(String ownerService, List<Long> ids){
         return imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerIdIn(ownerService, ids)
                 .stream()
                 .map(imageMapper::toResponse)
+                .toList();
+    }
+
+    public List<String> findAllUrlByOwnerIds(String ownerService, List<Long> ids){
+        return imageRepo.findAllByOwnerServiceIgnoreCaseAndOwnerIdIn(ownerService, ids)
+                .stream()
+                .map(Image::getUrl)
                 .toList();
     }
 

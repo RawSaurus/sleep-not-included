@@ -26,28 +26,31 @@ public class BuildController {
     public String testInfo(@PathVariable Long userId){
         return buildService.test(userId);
     }
-
+    //keep for test ?
     @GetMapping("/{id}")
     public ResponseEntity<BuildResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(buildService.findById(id));
     }
 
+//    fine
     @GetMapping("/name/{name}")
-    public ResponseEntity<BuildResponse> findByName(@PathVariable String name){
+    public ResponseEntity<BuildDetailResponse> findByName(@PathVariable String name){
         return ResponseEntity.ok(buildService.findByName(name));
     }
 
+    //detail dto not needed, just for search function
     @GetMapping("/search/{name}")
     public ResponseEntity<List<BuildResponse>> suggestSearch(@PathVariable String name){
         return ResponseEntity.ok(buildService.suggestSearch(name));
     }
 
+    //fine update naming
     @GetMapping("/{id}/details")
     public ResponseEntity<BuildDetailResponse> findBuildDetailsById(@PathVariable Long id){
         return ResponseEntity.ok(buildService.findBuildDetailsById(id));
     }
 
-
+    //fine, update naming
     @GetMapping("/all/test")
     public ResponseEntity<Page<BuildDetailResponse>> findAllTest(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -58,42 +61,44 @@ public class BuildController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         return ResponseEntity.ok(buildService.findAllBuildDetails(pageable));
     }
-
-    @GetMapping
-    public ResponseEntity<Page<BuildResponse>> findAll(
-            @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-    ){
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-        return ResponseEntity.ok(buildService.findAll(pageable));
-    }
-
-    @GetMapping("/logged/{userId}")
-    public ResponseEntity<Page<BuildResLoggedIn>> findAllLoggedIn(
-            @PathVariable Long userId,
-            @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-    ){
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-        return ResponseEntity.ok(buildService.findAllLoggedIn(userId, pageable));
-    }
-//    @GetMapping("/filters")
-//    public ResponseEntity<Page<BuildResponse>> findAllWithFilters(
-//            @RequestBody Set<Long> tags,  // temp type
-//            @RequestBody Set<Long> dlc,
+    //to be deleted
+//    @GetMapping
+//    public ResponseEntity<Page<BuildResponse>> findAll(
 //            @RequestParam(value = "page", defaultValue = "0") Integer page,
 //            @RequestParam(value = "size", defaultValue = "10") Integer size,
 //            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
 //            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
 //    ){
 //        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-//        return ResponseEntity.ok(buildService.findAllWithFilters(tags, dlc, pageable));
+//        return ResponseEntity.ok(buildService.findAll(pageable));
+//    }
+    //to be deleted
+//    @GetMapping("/logged/{userId}")
+//    public ResponseEntity<Page<BuildResLoggedIn>> findAllLoggedIn(
+//            @PathVariable Long userId,
+//            @RequestParam(value = "page", defaultValue = "0") Integer page,
+//            @RequestParam(value = "size", defaultValue = "10") Integer size,
+//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+//    ){
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+//        return ResponseEntity.ok(buildService.findAllLoggedIn(userId, pageable));
 //    }
 
+//    @GetMapping("/filters")
+//    public ResponseEntity<Page<BuildDetailResponse>> findAllWithFilters(
+//            @RequestParam String name,
+//            @RequestBody List<TagResponse> tags,
+//            @RequestParam(value = "page", defaultValue = "0") Integer page,
+//            @RequestParam(value = "size", defaultValue = "10") Integer size,
+//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
+//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
+//    ){
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+//        return ResponseEntity.ok(buildService.findAllWithFilters(name, tags, pageable));
+//    }
+
+    //update for new dto
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<BuildResponse>> findAllFromUser(
             @PathVariable Long userId,
@@ -106,6 +111,7 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllFromUser(userId, pageable));
     }
 
+    //update for new dto
     @GetMapping("/liked/{userId}")
     public ResponseEntity<Page<BuildResponse>> findAllLikedBuilds(
             @PathVariable Long userId,
@@ -118,6 +124,7 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllLikedBuilds(userId, pageable));
     }
 
+    //not necessary ?
     @GetMapping("/{buildId}/tags")
     public ResponseEntity<List<TagResponse>> findTagsByBuild(@PathVariable Long buildId){
         return ResponseEntity.ok(buildService.findAllTagsByBuild(buildId));

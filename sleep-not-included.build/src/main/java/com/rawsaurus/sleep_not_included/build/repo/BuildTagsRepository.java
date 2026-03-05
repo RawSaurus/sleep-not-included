@@ -1,6 +1,8 @@
 package com.rawsaurus.sleep_not_included.build.repo;
 
 import com.rawsaurus.sleep_not_included.build.model.BuildTags;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,6 +16,7 @@ public interface BuildTagsRepository extends JpaRepository<BuildTags, Long> {
     List<BuildTags> findAllByBuildId(Long buildId);
 
     List<BuildTags> findAllByBuildIdIn(List<Long> ids);
+    Page<BuildTags> findAllByTagIdIn(List<Long> ids, Pageable pageable);
 
     void deleteAllByBuildId(Long buildId);
     void deleteAllByTagId(Long tagId);

@@ -16,6 +16,7 @@ public record BuildDetailResponse(
     String creatorName,
     String thumbnailUrl,
     List<String> imageUrls,
-    List<TagResponse> tags
+    List<TagResponse> tags,
+    Boolean isLiked
 ){
 }

@@ -39,9 +39,19 @@ public class ImageController {
         return ResponseEntity.ok(imageService.findByOwner(ownerService, ownerId));
     }
 
+    @GetMapping("/owner/{ownerService}/{ownerId}/url")
+    public ResponseEntity<List<String>> findUrlByOwner(@PathVariable String ownerService, @PathVariable Long ownerId){
+        return ResponseEntity.ok(imageService.findUrlByOwner(ownerService, ownerId));
+    }
+
     @GetMapping("/owner/{ownerService}/batch")
     public ResponseEntity<List<ImageResponse>> findAllByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds){
         return ResponseEntity.ok(imageService.findAllByOwnerIds(ownerService, ownerIds));
+    }
+
+    @GetMapping("/owner/{ownerService}/batch/url")
+    public ResponseEntity<List<String>> findAllUrlByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds){
+        return ResponseEntity.ok(imageService.findAllUrlByOwnerIds(ownerService, ownerIds));
     }
 
     @GetMapping(value = "/download/{name}", produces = MediaType.IMAGE_JPEG_VALUE)

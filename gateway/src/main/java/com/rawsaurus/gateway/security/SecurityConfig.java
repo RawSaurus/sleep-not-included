@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -31,6 +32,12 @@ public class SecurityConfig {
     @Value("${sni.security.client-id-frontend}")
     private String clientIdFrontend;
 
+    private final CustomAuthEntryPoint customAuthEntryPoint;
+
+    public SecurityConfig(CustomAuthEntryPoint customAuthEntryPoint) {
+        this.customAuthEntryPoint = customAuthEntryPoint;
+    }
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http){
         return http
@@ -38,7 +45,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchange -> exchange
                                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                                 .pathMatchers(
                                         "/swagger-ui.html",
                                         "/swagger-ui/**",
@@ -49,44 +55,54 @@ public class SecurityConfig {
                                         "/api/*/v3/api-docs",      // Service-specific docs
                                         "/api/*/swagger-ui/**"      // Service-specific UI
                                 ).permitAll()
-
                                 .pathMatchers(
                                         "/actuator/health",
                                         "/actuator/info",
                                         "/actuator/prometheus"
                                 ).permitAll()
-                        .anyExchange().permitAll()
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/user/**",
+                                "/build/**",
+                                "/comment/**",
+                                "/tag/**",
+                                "/image/**",
+                                "/res/**"
+                        ).permitAll()
+                        .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(
-                        jwt -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())
-                ))
+                        jwt -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor()))
+                                .authenticationEntryPoint(customAuthEntryPoint)
+                        )
+                .anonymous(Customizer.withDefaults())
         .build();
     }
 
-    @Bean
-    @Order(0)
-    public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
-        return http
-                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(
-                                        "/swagger-ui.html",
-                                        "/swagger-ui/**",
-                                        "/v3/api-docs/**",
-                                        "/webjars/**",
-                                        "/swagger-resources/**",
-                                        "/api-docs/**",
-                                        "/api/*/v3/api-docs",
-                                        "/api/*/swagger-ui/**",
-                                        "/actuator/health",
-                                        "/actuator/info",
-                                        "/actuator/prometheus"
-                        )
-                )
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeExchange(exchange -> exchange.anyExchange().permitAll())
-//                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.authenticationManager()))
-                .build();
-    }
+//    @Bean
+//    @Order(0)
+//    public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
+//        return http
+//                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(
+//                                        "/swagger-ui.html",
+//                                        "/swagger-ui/**",
+//                                        "/v3/api-docs/**",
+//                                        "/webjars/**",
+//                                        "/swagger-resources/**",
+//                                        "/api-docs/**",
+//                                        "/api/*/v3/api-docs",
+//                                        "/api/*/swagger-ui/**",
+//                                        "/actuator/health",
+//                                        "/actuator/info",
+//                                        "/actuator/prometheus"
+//                        )
+//                )
+//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .authorizeExchange(exchange -> exchange.anyExchange().permitAll())
+////                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.authenticationManager()))
+//                .build();
+//    }
 
 //    @Bean
 //    @Order(1)

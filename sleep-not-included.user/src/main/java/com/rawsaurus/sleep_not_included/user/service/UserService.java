@@ -56,6 +56,13 @@ public class UserService {
         );
     }
 
+    public UserResponse findUserByKeycloakId(String keycloakId){
+        return userMapper.toResponse(
+                userRepo.findByKeycloakId(keycloakId)
+                        .orElseThrow(() -> new EntityNotFoundException("User not found"))
+        );
+    }
+
     public List<UserResponse> findUsersByNameLike(String username){
         Pageable pageable = PageRequest.of(0,5);
         return userRepo.searchUsers(username, pageable)

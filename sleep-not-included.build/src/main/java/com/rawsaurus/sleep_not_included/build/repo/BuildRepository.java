@@ -17,6 +17,7 @@ public interface BuildRepository extends JpaRepository<Build, Long> {
 
     List<Build> findAllByCreatorId(Long creatorId);
 
+    Page<Build> findAllByIdIn(List<Long> ids, Pageable pageable);
     Page<Build> findAllByNameLikeIgnoreCase(String name, Pageable pageable);
 //    Page<Build> findAllByDlcIdAndTagsId(Set<Long> dlcId, Set<Long> tagsId, Pageable pageable);
     Page<Build> findAllByCreatorId(Long creatorId, Pageable pageable);
