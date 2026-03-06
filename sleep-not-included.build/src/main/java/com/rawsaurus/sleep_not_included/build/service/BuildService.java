@@ -163,8 +163,8 @@ public class BuildService {
         return new PageImpl<>(responses, pageable, content.size());
     }
 
-    public Page<BuildDetailResponse> findAllBuildDetailsByTags(List<TagResponse> tags, Pageable pageable) {
-        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
+    public Page<BuildDetailResponse> findAllBuildDetailsByTags(List<Long> tagIds, Pageable pageable) {
+//        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
         Page<BuildTags> buildTags = buildTagsRepo.findAllByTagIdIn(tagIds, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         Page<Build> builds = buildRepo.findAllByIdIn(
                 buildTags.getContent().stream().map(BuildTags::getBuildId).toList(),
@@ -196,6 +196,109 @@ public class BuildService {
                 .stream()
                 .map(buildMapper::toResponse)
                 .toList();
+    }
+
+    /**
+     * Resolve a list of tag IDs to TagResponse objects.
+     * Add to BuildService.
+     */
+    public List<TagResponse> resolveTagsByIds(List<Long> tagIds) {
+        List<TagResponse> tags = tagClient.findAllByIds(tagIds).getBody();
+        return tags != null ? tags : List.of();
+    }
+
+    /**
+     * Filter builds by name, tags, or both.
+     * Handles all four combinations:
+     *   - neither  → return all (delegate to findAllBuildDetails)
+     *   - name only → filter by name using LIKE search
+     *   - tags only → filter by tag membership
+     *   - both      → intersect: builds matching name AND having all selected tags
+     *
+     * Add to BuildService.
+     */
+    public Page<BuildDetailResponse> findAllWithFilters(String name, List<Long> tagIds, Pageable pageable) {
+
+//        List<TagResponse> tags = null;
+//        if (tagIds != null && !tagIds.isEmpty()) {
+//            // Resolve tag IDs to TagResponse objects via the tag client
+//            tags = resolveTagsByIds(tagIds);
+//        }
+
+        boolean hasName = name != null && !name.isBlank();
+        boolean hasTags = tagIds != null && !tagIds.isEmpty();
+
+        // ── No filters: return everything ──────────────────
+        if (!hasName && !hasTags) {
+            return findAllBuildDetails(pageable);
+        }
+
+        // ── Name only ──────────────────────────────────────
+        if (hasName && !hasTags) {
+            return findAllBuildDetailsByName(name, pageable);
+        }
+
+        // ── Tags only ──────────────────────────────────────
+        if (!hasName && hasTags) {
+            return findAllBuildDetailsByTags(tagIds, pageable);
+        }
+        // ── Both name AND tags ─────────────────────────────
+        // 1. Get build IDs that match all selected tags
+//        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
+        List<BuildTags> buildTagMatches = buildTagsRepo.findAllByBuildIdIn(
+                buildTagsRepo.findAllByTagIdIn(tagIds, PageRequest.of(0, Integer.MAX_VALUE))
+                        .getContent()
+                        .stream()
+                        .map(BuildTags::getBuildId)
+                        .distinct()
+                        .toList()
+        );
+
+        // Retain only builds that have ALL selected tags (not just any)
+        Map<Long, Long> tagCountByBuild = buildTagMatches.stream()
+                .filter(bt -> tagIds.contains(bt.getTagId()))
+                .collect(Collectors.groupingBy(BuildTags::getBuildId, Collectors.counting()));
+
+        List<Long> buildIdsWithAllTags = tagCountByBuild.entrySet().stream()
+                .filter(e -> e.getValue() == tagIds.size())
+                .map(Map.Entry::getKey)
+                .toList();
+
+        if (buildIdsWithAllTags.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. From those IDs, further filter by name (LIKE)
+        List<Build> nameMatches = buildRepo.searchBuilds(name, Pageable.unpaged())
+                .stream()
+                .filter(b -> buildIdsWithAllTags.contains(b.getId()))
+                .toList();
+
+        if (nameMatches.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 3. Manual pagination over the filtered list
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), nameMatches.size());
+        if (start >= nameMatches.size()) {
+            return Page.empty(pageable);
+        }
+        List<Build> pageContent = nameMatches.subList(start, end);
+
+        // 4. Enrich to BuildDetailResponse
+        List<Long> buildIds = extractBuildIds(pageContent);
+        List<Long> creatorIds = extractCreatorIds(pageContent);
+
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
+
+        List<BuildDetailResponse> responses = pageContent.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, nameMatches.size());
     }
 
         //would be too bad on performance, solve by join on tables
@@ -286,41 +389,82 @@ public class BuildService {
         return tagClient.findAllByIds(tagIds).getBody();
     }
 
-    public Page<BuildResponse> findAllFromUser(Long userId, Pageable pageable){
-        var user = userClient.findUserById(userId).getBody();
-        if (user == null){
-            throw new EntityNotFoundException("User not found");
+    public Page<BuildDetailResponse> findAllFromUser(Long userId, Pageable pageable){
+//        var user = userClient.findUserById(userId).getBody();
+//        if (user == null){
+//            throw new EntityNotFoundException("User not found");
+//        }
+//        return buildRepo.findAllByCreatorId(user.id(), pageable)
+//                .map(buildMapper::toResponse);
+        Page<Build> builds = buildRepo.findAllByCreatorId(userId, pageable);
+        List<Build> content = builds.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
         }
-        return buildRepo.findAllByCreatorId(user.id(), pageable)
-                .map(buildMapper::toResponse);
+
+        List<Long> buildIds = extractBuildIds(content);
+        List<Long> creatorIds = extractCreatorIds(content);
+
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
+
+        List<BuildDetailResponse> responses = content.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, builds.getTotalElements());
     }
 
-    public Page<BuildResponse> findAllLikedBuilds(Long userId, Pageable pageable){
-        var user = userClient.findUserById(userId).getBody();
-        if (user == null){
-            throw new EntityNotFoundException("User not found");
-        }
+    public Page<BuildDetailResponse> findAllLikedBuilds(Long userId, Pageable pageable){
+//        var user = userClient.findUserById(userId).getBody();
+//        if (user == null){
+//            throw new EntityNotFoundException("User not found");
+//        }
+//        List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
+//        List<BuildResponse> builds = new ArrayList<>();
+//        for(LikedBuilds l : likedBuilds){
+//            builds.add(
+//                    buildMapper.toResponse(
+//                            buildRepo.findById(l.getBuildId())
+//                                    .orElseThrow(() -> new EntityNotFoundException("Build not found"))
+//                    )
+//            );
+//        }
+//
+//        int start = (int) pageable.getOffset();
+//        int end = Math.min(start + pageable.getPageSize(), builds.size());
+//
+//        if (start >= builds.size()) {
+//            return new PageImpl<>(Collections.emptyList(), pageable, builds.size());
+//        }
+//
+//        return new PageImpl<BuildResponse>(
+//                builds.subList(start, end), pageable, builds.size()
+//        );
         List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
-        List<BuildResponse> builds = new ArrayList<>();
-        for(LikedBuilds l : likedBuilds){
-            builds.add(
-                    buildMapper.toResponse(
-                            buildRepo.findById(l.getBuildId())
-                                    .orElseThrow(() -> new EntityNotFoundException("Build not found"))
-                    )
-            );
+        Page<Build> builds = buildRepo.findAllByIdIn(
+                likedBuilds.stream().map(LikedBuilds::getBuildId).toList(),
+                pageable);
+        List<Build> content = builds.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), builds.size());
+        List<Long> buildIds = extractBuildIds(content);
+        List<Long> creatorIds = extractCreatorIds(content);
 
-        if (start >= builds.size()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, builds.size());
-        }
+        Map<Long, String> usernameByCreatorId = fetchUsernamesByIds(creatorIds);
+        Map<Long, List<ImageResponse>> imagesByBuildId = fetchImagesByBuildIds(buildIds);
+        Map<Long, List<TagResponse>> tagsByBuildId = fetchTagsByBuildIds(buildIds);
 
-        return new PageImpl<BuildResponse>(
-                builds.subList(start, end), pageable, builds.size()
-        );
+        List<BuildDetailResponse> responses = content.stream()
+                .map(build -> toBuildDetailResponse(build, usernameByCreatorId, imagesByBuildId, tagsByBuildId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, builds.getTotalElements());
     }
 
     public BuildResponse createBuild(BuildRequest request){

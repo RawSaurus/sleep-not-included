@@ -1,6 +1,8 @@
 package com.rawsaurus.sleep_not_included.build.repo;
 
 import com.rawsaurus.sleep_not_included.build.model.LikedBuilds;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +15,6 @@ public interface LikedBuildsRepository extends JpaRepository<LikedBuilds, Long> 
     Optional<LikedBuilds> findByUserIdAndBuildId(Long userId, Long buildId);
     List<LikedBuilds> findAllByUserId(Long userId);
     List<LikedBuilds> findAllByBuildId(Long buildId);
+
+    Page<LikedBuilds> findAllByUserId(Long userId, Pageable pageable);
 }

@@ -61,6 +61,20 @@ public class BuildController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         return ResponseEntity.ok(buildService.findAllBuildDetails(pageable));
     }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<BuildDetailResponse>> filterBuilds(
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "tagIds", required = false) List<Long> tagIds,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", defaultValue = "createdAt") String sortBy,
+            @RequestParam(value = "sort-direction", defaultValue = "desc") String sortDirection
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return ResponseEntity.ok(buildService.findAllWithFilters(name, tagIds, pageable));
+    }
+
     //to be deleted
 //    @GetMapping
 //    public ResponseEntity<Page<BuildResponse>> findAll(
@@ -100,7 +114,7 @@ public class BuildController {
 
     //update for new dto
     @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<BuildResponse>> findAllFromUser(
+    public ResponseEntity<Page<BuildDetailResponse>> findAllFromUser(
             @PathVariable Long userId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
@@ -113,7 +127,7 @@ public class BuildController {
 
     //update for new dto
     @GetMapping("/liked/{userId}")
-    public ResponseEntity<Page<BuildResponse>> findAllLikedBuilds(
+    public ResponseEntity<Page<BuildDetailResponse>> findAllLikedBuilds(
             @PathVariable Long userId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
