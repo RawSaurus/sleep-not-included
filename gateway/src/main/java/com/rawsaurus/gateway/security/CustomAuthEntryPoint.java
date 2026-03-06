@@ -11,11 +11,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+
 @Component
 public class CustomAuthEntryPoint implements ServerAuthenticationEntryPoint {
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
+        System.out.println("ex \n" + ex.getMessage() + "\n" + Arrays.toString(ex.getStackTrace()));
         if (ex instanceof InvalidBearerTokenException) {
             ServerHttpResponse response = exchange.getResponse();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);

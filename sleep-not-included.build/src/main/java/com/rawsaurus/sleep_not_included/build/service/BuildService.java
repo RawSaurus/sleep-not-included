@@ -323,7 +323,8 @@ public class BuildService {
         );
     }
 
-    public BuildResponse createBuild(Long creatorId, BuildRequest request){
+    public BuildResponse createBuild(BuildRequest request){
+        Long creatorId = resolveUserId();
         var user = userClient.findUserById(creatorId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");
@@ -348,7 +349,8 @@ public class BuildService {
         }
     }
 
-    public void likeBuild(Long userId, Long buildId){
+    public void likeBuild(Long buildId){
+        Long userId = resolveUserId();
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");
@@ -373,7 +375,8 @@ public class BuildService {
     }
 
     @Transactional
-    public BuildResponse updateBuild(Long userId, Long buildId, BuildRequest request){
+    public BuildResponse updateBuild(Long buildId, BuildRequest request){
+        Long userId = resolveUserId();
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");
@@ -397,7 +400,8 @@ public class BuildService {
     }
 
     @Transactional
-    public String deleteBuild(Long userId, Long buildId){
+    public String deleteBuild(Long buildId){
+        Long userId = resolveUserId();
         var user = userClient.findUserById(userId);
         if (user.getBody() == null){
             throw new EntityNotFoundException("User not found");
@@ -426,7 +430,8 @@ public class BuildService {
 
     //not needed
     @Transactional
-    public void deleteAllFromUser(Long userId){
+    public void deleteAllFromUser(){
+        Long userId = resolveUserId();
         var user = userClient.findUserById(userId).getBody();
         if (user == null){
             throw new EntityNotFoundException("User not found");
@@ -436,6 +441,9 @@ public class BuildService {
 
         buildRepo.deleteAll(builds);
         likedBuildsRepo.deleteAll(likedBuilds);
+        buildTagsRepo.deleteAllByBuildIdIn(
+                builds.stream().map(Build::getId).toList()
+        );
     }
 
     @RabbitListener(queues = BUILD_USER_DELETED_QUEUE)
@@ -446,8 +454,10 @@ public class BuildService {
 
         buildRepo.deleteAll(builds);
         likedBuildsRepo.deleteAll(likedBuilds);
+        buildTagsRepo.deleteAllByBuildIdIn(
+                builds.stream().map(Build::getId).toList()
+        );
         for(Build b : builds){
-            buildTagsRepo.deleteAllByBuildId(b.getId());
 
             rabbitTemplate.convertAndSend(
                     BUILD_EVENT_EXCHANGE,

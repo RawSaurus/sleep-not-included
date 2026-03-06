@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -42,7 +43,9 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http){
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> {
+                    cors.configurationSource(corsConfigurationSource());
+                })
                 .authorizeExchange(exchange -> exchange
                                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .pathMatchers(
@@ -52,8 +55,8 @@ public class SecurityConfig {
                                         "/webjars/**",
                                         "/swagger-resources/**",
                                         "/api-docs/**",
-                                        "/api/*/v3/api-docs",      // Service-specific docs
-                                        "/api/*/swagger-ui/**"      // Service-specific UI
+                                        "/api/*/v3/api-docs",
+                                        "/api/*/swagger-ui/**"
                                 ).permitAll()
                                 .pathMatchers(
                                         "/actuator/health",
@@ -72,9 +75,17 @@ public class SecurityConfig {
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(
-                        jwt -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor()))
+                        jwt ->
+                            jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor()))
                                 .authenticationEntryPoint(customAuthEntryPoint)
                         )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(customAuthEntryPoint)
+                        .accessDeniedHandler((exchange, denied) -> {
+                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                            return exchange.getResponse().setComplete();
+                        })
+                )
                 .anonymous(Customizer.withDefaults())
         .build();
     }
@@ -140,17 +151,13 @@ public class SecurityConfig {
             List<String> roles = jwt.getClaimAsMap("resource_access")
                     .entrySet().stream()
                     .filter(entry -> {
-                        System.out.println("entry " + entry.getKey());
                         return entry.getKey().equals(clientIdFrontend);
                     })
                     .flatMap(entry -> {
-                        System.out.println("entry value " + entry.getValue());
                         return ((Map<String, List<String>>) entry.getValue())
                             .get("roles").stream();
                     })
                     .toList();
-
-            System.out.println("roles " + roles);
 
             return Flux.fromIterable(roles)
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role));

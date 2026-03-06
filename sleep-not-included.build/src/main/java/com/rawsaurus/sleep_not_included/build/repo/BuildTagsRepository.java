@@ -20,4 +20,6 @@ public interface BuildTagsRepository extends JpaRepository<BuildTags, Long> {
 
     void deleteAllByBuildId(Long buildId);
     void deleteAllByTagId(Long tagId);
+
+    void deleteAllByBuildIdIn(List<Long> buildIds);
 }

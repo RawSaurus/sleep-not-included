@@ -130,30 +130,30 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllTagsByBuild(buildId));
     }
 
-    @PostMapping("/{userId}")
-    public ResponseEntity<BuildResponse> createBuild(@PathVariable Long userId, @Valid @RequestBody BuildRequest request){
-        return ResponseEntity.ok(buildService.createBuild(userId, request));
+    @PostMapping
+    public ResponseEntity<BuildResponse> createBuild(@Valid @RequestBody BuildRequest request){
+        return ResponseEntity.ok(buildService.createBuild(request));
     }
 
-    @PostMapping("/like/{userId}/{buildId}")
-    public ResponseEntity<?> likeBuild(@PathVariable Long userId, @PathVariable Long buildId){
-        buildService.likeBuild(userId, buildId);
+    @PostMapping("/like/{buildId}")
+    public ResponseEntity<?> likeBuild(@PathVariable Long buildId){
+        buildService.likeBuild(buildId);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{userId}/{buildId}")
-    public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long userId, @PathVariable Long buildId, @Valid @RequestBody BuildRequest request){
-        return ResponseEntity.ok(buildService.updateBuild(userId, buildId, request));
+    @PutMapping("/{buildId}")
+    public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long buildId, @Valid @RequestBody BuildRequest request){
+        return ResponseEntity.ok(buildService.updateBuild(buildId, request));
     }
 
-    @DeleteMapping("/{userId}/{buildId}")
-    public ResponseEntity<?> deleteBuild(@PathVariable Long userId, @PathVariable Long buildId){
-        return ResponseEntity.ok(buildService.deleteBuild(userId, buildId));
+    @DeleteMapping("/{buildId}")
+    public ResponseEntity<?> deleteBuild(@PathVariable Long buildId){
+        return ResponseEntity.ok(buildService.deleteBuild(buildId));
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteAllFromUser(@PathVariable Long userId){
-        buildService.deleteAllFromUser(userId);
+    @DeleteMapping("/all")
+    public ResponseEntity<?> deleteAllFromUser(){
+        buildService.deleteAllFromUser();
         return ResponseEntity.ok().build();
     }
 }
