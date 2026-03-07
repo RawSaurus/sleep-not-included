@@ -1,36 +1,40 @@
 package com.rawsaurus.sleep_not_included.gameres.model;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Type;
 
-import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Element {
+@DiscriminatorValue("ELEMENT")
+public class Element extends GameRes {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    @Enumerated(value = EnumType.STRING)
-    @Column(nullable = false)
+    private double thermalConductivity;
+    private double specificHeatCapacity;
+    private double molarMass;
+    private int hardness;
+    private int lightAbsorptionFactor;
+
+    @Enumerated(EnumType.STRING)
     private State state;
-    private String description;
-    private String image;
 
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> stateTransition;
+
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, List<Recipe>> recipes;
+//    private List<Recipe> consumes;
+//
+//    private List<Recipe> produces;
 }

@@ -1,7 +1,10 @@
 package com.rawsaurus.sleep_not_included.gameres.model;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,22 +15,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Medicine {
+public class Medicine extends GameRes {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String description;
-    private String image;
-
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "duration_value")),
+            @AttributeOverride(name = "unit", column = @Column(name = "duration_unit"))
+    })
+    private ValueUnit duration;
+    private double radiationRecovery;
+    private double germResistance;
+    //change to entity
+    private Long disease;
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Recipe recipe;
 }

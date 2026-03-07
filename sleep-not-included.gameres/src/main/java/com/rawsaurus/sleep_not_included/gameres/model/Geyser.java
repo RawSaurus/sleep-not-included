@@ -2,6 +2,7 @@ package com.rawsaurus.sleep_not_included.gameres.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,22 +13,43 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Geyser {
+public class Geyser extends GameRes{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String description;
-    private String image;
-
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "max_pressure_value")),
+            @AttributeOverride(name = "unit", column = @Column(name = "max_pressure_unit")),
+    })
+    private ValueUnit maxPressure;
+    @AttributeOverrides({
+            @AttributeOverride(name = "min", column = @Column(name = "avg_emission_rate_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "avg_emission_rate_max")),
+            @AttributeOverride(name = "unit", column = @Column(name = "avg_emission_rate_unit"))
+    })
+    private RangeValue avgEmissionRate;
+    @AttributeOverrides({
+            @AttributeOverride(name = "min", column = @Column(name = "total_eruption_period_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "total_eruption_period_max")),
+            @AttributeOverride(name = "unit", column = @Column(name = "total_eruption_period_unit"))
+    })
+    private RangeValue totalEruptionPeriod;
+    @AttributeOverrides({
+            @AttributeOverride(name = "min", column = @Column(name = "active_of_eruption_period_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "active_of_eruption_period_max")),
+            @AttributeOverride(name = "unit", column = @Column(name = "active_of_eruption_period_unit"))
+    })
+    private RangeValue activeOfEruptionPeriod;
+    @AttributeOverrides({
+            @AttributeOverride(name = "min", column = @Column(name = "total_period_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "total_period_max")),
+            @AttributeOverride(name = "unit", column = @Column(name = "total_period_unit"))
+    })
+    private RangeValue totalPeriod;
+    @AttributeOverrides({
+            @AttributeOverride(name = "min", column = @Column(name = "active_period_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "active_period_max")),
+            @AttributeOverride(name = "unit", column = @Column(name = "active_period_unit"))
+    })
+    private RangeValue activePeriod;
 }

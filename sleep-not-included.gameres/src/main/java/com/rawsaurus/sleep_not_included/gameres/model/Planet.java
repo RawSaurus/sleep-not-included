@@ -8,6 +8,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +16,12 @@ import java.time.LocalDateTime;
 @Setter
 @SuperBuilder
 @Entity
-public class Other extends GameRes {
+public class Planet extends GameRes{
+
+    //change to entity?
+    private List<Long> composition;
+    //change to entity?
+    private List<Long> resources;
+    //artifacts
 
 }
