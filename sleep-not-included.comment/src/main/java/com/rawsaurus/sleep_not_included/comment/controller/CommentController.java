@@ -68,45 +68,41 @@ public class CommentController {
         return ResponseEntity.ok(commentService.findAllResponses(commentId, pageable));
     }
 
-    @PostMapping("/{userId}/{buildId}")
+    @PostMapping("/{buildId}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> createComment(
-            @PathVariable Long userId,
             @PathVariable Long buildId,
             @Valid @RequestBody CommentRequest request
             ){
-        return ResponseEntity.ok(commentService.createComment(userId, buildId, request));
+        return ResponseEntity.ok(commentService.createComment(buildId, request));
     }
 
-    @PostMapping("/respond/{userId}/{commentId}")
+    @PostMapping("/respond/{commentId}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> respond(
-            @PathVariable Long userId,
             @PathVariable Long commentId,
             @Valid @RequestBody CommentRequest request
     ){
-        return ResponseEntity.ok(commentService.respond(userId, commentId, request));
+        return ResponseEntity.ok(commentService.respond(commentId, request));
     }
 
-    @PostMapping("/like/{userId}/{commentId}")
+    @PostMapping("/like/{commentId}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> likeComment(
-            @PathVariable Long userId,
             @PathVariable Long commentId
     ){
-        commentService.likeComment(userId, commentId);
+        commentService.likeComment(commentId);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{userId}/{buildId}/{id}")
+    @PutMapping("/{buildId}/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> updateComment(
-            @PathVariable Long userId,
             @PathVariable Long buildId,
             @PathVariable Long id,
             @Valid @RequestBody CommentRequest request
     ){
-        return ResponseEntity.ok(commentService.updateComment(userId, buildId, id, request));
+        return ResponseEntity.ok(commentService.updateComment(buildId, id, request));
     }
 
     @DeleteMapping("/{id}")

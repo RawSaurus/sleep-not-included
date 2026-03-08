@@ -80,7 +80,7 @@ public class CommentService {
                 .map(commentMapper::toResponse);
     }
 
-    public CommentResponse createComment(Long userId, Long buildId, CommentRequest request){
+    public CommentResponse createComment(Long buildId, CommentRequest request){
 //        var user = userClient.findUser(userId).getBody();
         var user = resolveUser();
 
@@ -106,7 +106,7 @@ public class CommentService {
         );
     }
 
-    public CommentResponse respond(Long userId, Long commentId, CommentRequest request){
+    public CommentResponse respond(Long commentId, CommentRequest request){
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
         var user = resolveUser();
@@ -126,14 +126,14 @@ public class CommentService {
         return commentMapper.toResponse(commentRespond);
     }
 
-    public void likeComment(Long userId, Long commentId){
+    public void likeComment(Long commentId){
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
         var user = resolveUser();
         if(user == null){
             throw new EntityNotFoundException("User not found");
         }
-        Optional<LikedComments> likedComment = likedComsRepo.findByUserIdAndCommentId(userId, commentId);
+        Optional<LikedComments> likedComment = likedComsRepo.findByUserIdAndCommentId(user.id(), commentId);
 
         if(likedComment.isPresent()){
             comment.setLikes(comment.getLikes() - 1);
@@ -141,7 +141,7 @@ public class CommentService {
         }else{
             comment.setLikes(comment.getLikes() + 1);
             LikedComments likedCommentsToSave = likedComsRepo.save(LikedComments.builder()
-                    .userId(userId)
+                    .userId(user.id())
                     .commentId(commentId)
                     .build());
             likedComsRepo.save(likedCommentsToSave);
@@ -149,7 +149,7 @@ public class CommentService {
         commentRepo.save(comment);
     }
 
-    public CommentResponse updateComment(Long userId, Long buildId, Long id, CommentRequest request){
+    public CommentResponse updateComment(Long buildId, Long id, CommentRequest request){
         var user = resolveUser();
         var build = buildClient.findById(buildId).getBody();
 
