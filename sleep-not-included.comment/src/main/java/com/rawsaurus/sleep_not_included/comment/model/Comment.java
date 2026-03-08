@@ -37,6 +37,8 @@ public class Comment {
     private Comment parent;
 
     private Long userId;
+    private String username;
+
     private Long buildId;
 
     @CreatedDate

@@ -6,11 +6,22 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "SLEEP-NOT-INCLUDED-USER", configuration = FeignSecurityConfig.class)
+import java.util.List;
+
+@FeignClient(name="SLEEP-NOT-INCLUDED-USER", configuration = FeignSecurityConfig.class)
 public interface UserClient {
 
-    @GetMapping("/api/v1/user/{userId}")
+    String BASE = "/api/v1/user";
+
+    @GetMapping(BASE + "/{userId}")
     ResponseEntity<UserResponse> findUser(@PathVariable Long userId);
+
+    @GetMapping(BASE + "/find-all-by-ids")
+    ResponseEntity<List<UserResponse>> findAllByIds(@RequestParam List<Long> ids);
+
+    @GetMapping(BASE + "/keycloak/{keycloakId}")
+    ResponseEntity<UserResponse> findUserByKeycloakId(@PathVariable String keycloakId);
 
 }

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,33 +27,28 @@ public class BuildController {
     public String testInfo(@PathVariable Long userId){
         return buildService.test(userId);
     }
-    //keep for test ?
     @GetMapping("/{id}")
     public ResponseEntity<BuildResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(buildService.findById(id));
     }
 
-//    fine
     @GetMapping("/name/{name}")
     public ResponseEntity<BuildDetailResponse> findByName(@PathVariable String name){
         return ResponseEntity.ok(buildService.findByName(name));
     }
 
-    //detail dto not needed, just for search function
     @GetMapping("/search/{name}")
     public ResponseEntity<List<BuildResponse>> suggestSearch(@PathVariable String name){
         return ResponseEntity.ok(buildService.suggestSearch(name));
     }
 
-    //fine update naming
     @GetMapping("/{id}/details")
     public ResponseEntity<BuildDetailResponse> findBuildDetailsById(@PathVariable Long id){
         return ResponseEntity.ok(buildService.findBuildDetailsById(id));
     }
 
-    //fine, update naming
-    @GetMapping("/all/test")
-    public ResponseEntity<Page<BuildDetailResponse>> findAllTest(
+    @GetMapping("/all")
+    public ResponseEntity<Page<BuildDetailResponse>> findAll(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "sort", defaultValue = "name") String sortBy,
@@ -75,44 +71,6 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllWithFilters(name, tagIds, pageable));
     }
 
-    //to be deleted
-//    @GetMapping
-//    public ResponseEntity<Page<BuildResponse>> findAll(
-//            @RequestParam(value = "page", defaultValue = "0") Integer page,
-//            @RequestParam(value = "size", defaultValue = "10") Integer size,
-//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-//    ){
-//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-//        return ResponseEntity.ok(buildService.findAll(pageable));
-//    }
-    //to be deleted
-//    @GetMapping("/logged/{userId}")
-//    public ResponseEntity<Page<BuildResLoggedIn>> findAllLoggedIn(
-//            @PathVariable Long userId,
-//            @RequestParam(value = "page", defaultValue = "0") Integer page,
-//            @RequestParam(value = "size", defaultValue = "10") Integer size,
-//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-//    ){
-//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-//        return ResponseEntity.ok(buildService.findAllLoggedIn(userId, pageable));
-//    }
-
-//    @GetMapping("/filters")
-//    public ResponseEntity<Page<BuildDetailResponse>> findAllWithFilters(
-//            @RequestParam String name,
-//            @RequestBody List<TagResponse> tags,
-//            @RequestParam(value = "page", defaultValue = "0") Integer page,
-//            @RequestParam(value = "size", defaultValue = "10") Integer size,
-//            @RequestParam(value = "sort", defaultValue = "name") String sortBy,
-//            @RequestParam(value = "sort-direction", defaultValue = "asc") String sortDirection
-//    ){
-//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-//        return ResponseEntity.ok(buildService.findAllWithFilters(name, tags, pageable));
-//    }
-
-    //update for new dto
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<BuildDetailResponse>> findAllFromUser(
             @PathVariable Long userId,
@@ -125,7 +83,6 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllFromUser(userId, pageable));
     }
 
-    //update for new dto
     @GetMapping("/liked/{userId}")
     public ResponseEntity<Page<BuildDetailResponse>> findAllLikedBuilds(
             @PathVariable Long userId,
@@ -138,34 +95,38 @@ public class BuildController {
         return ResponseEntity.ok(buildService.findAllLikedBuilds(userId, pageable));
     }
 
-    //not necessary ?
     @GetMapping("/{buildId}/tags")
     public ResponseEntity<List<TagResponse>> findTagsByBuild(@PathVariable Long buildId){
         return ResponseEntity.ok(buildService.findAllTagsByBuild(buildId));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<BuildResponse> createBuild(@Valid @RequestBody BuildRequest request){
         return ResponseEntity.ok(buildService.createBuild(request));
     }
 
     @PostMapping("/like/{buildId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> likeBuild(@PathVariable Long buildId){
         buildService.likeBuild(buildId);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{buildId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<BuildResponse> updateBuild(@PathVariable Long buildId, @Valid @RequestBody BuildRequest request){
         return ResponseEntity.ok(buildService.updateBuild(buildId, request));
     }
 
     @DeleteMapping("/{buildId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> deleteBuild(@PathVariable Long buildId){
         return ResponseEntity.ok(buildService.deleteBuild(buildId));
     }
 
     @DeleteMapping("/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> deleteAllFromUser(){
         buildService.deleteAllFromUser();
         return ResponseEntity.ok().build();

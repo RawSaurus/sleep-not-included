@@ -1,11 +1,14 @@
 package com.rawsaurus.sleep_not_included.comment.service;
 
+import ch.qos.logback.core.joran.spi.ActionException;
 import com.rawsaurus.sleep_not_included.comment.client.BuildClient;
 import com.rawsaurus.sleep_not_included.comment.client.UserClient;
 import com.rawsaurus.sleep_not_included.comment.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentRequest;
 import com.rawsaurus.sleep_not_included.comment.dto.CommentResponse;
 import com.rawsaurus.sleep_not_included.comment.dto.DeleteEntityEvent;
+import com.rawsaurus.sleep_not_included.comment.dto.UserResponse;
+import com.rawsaurus.sleep_not_included.comment.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.comment.mapper.CommentMapper;
 import com.rawsaurus.sleep_not_included.comment.model.Comment;
 //import com.rawsaurus.sleep_not_included.comment.model.CommentResponses;
@@ -17,6 +20,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -74,12 +81,15 @@ public class CommentService {
     }
 
     public CommentResponse createComment(Long userId, Long buildId, CommentRequest request){
-        var user = userClient.findUser(userId).getBody();
+//        var user = userClient.findUser(userId).getBody();
+        var user = resolveUser();
+
         var build = buildClient.findById(buildId).getBody();
 
         if(user == null){
             throw new EntityNotFoundException("User not found");
         }
+
         if(build == null){
             throw new EntityNotFoundException("Build not found");
         }
@@ -87,6 +97,7 @@ public class CommentService {
         Comment comment = commentMapper.toEntity(request);
 
         comment.setUserId(user.id());
+        comment.setUsername(user.username());
         comment.setBuildId(build.id());
         comment.setOriginal(true);
 
@@ -98,7 +109,7 @@ public class CommentService {
     public CommentResponse respond(Long userId, Long commentId, CommentRequest request){
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        var user = userClient.findUser(userId).getBody();
+        var user = resolveUser();
         if(user == null){
             throw new EntityNotFoundException("User not found");
         }
@@ -118,7 +129,7 @@ public class CommentService {
     public void likeComment(Long userId, Long commentId){
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        var user = userClient.findUser(userId).getBody();
+        var user = resolveUser();
         if(user == null){
             throw new EntityNotFoundException("User not found");
         }
@@ -139,7 +150,7 @@ public class CommentService {
     }
 
     public CommentResponse updateComment(Long userId, Long buildId, Long id, CommentRequest request){
-        var user = userClient.findUser(userId).getBody();
+        var user = resolveUser();
         var build = buildClient.findById(buildId).getBody();
 
         if(user == null){
@@ -163,6 +174,10 @@ public class CommentService {
     public String deleteComment(Long id){
         var comment = commentRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        var user = resolveUser();
+        if(!comment.getUserId().equals(user.id())){
+            throw new ActionNotAllowed("Only creator can delete the comment");
+        }
         List<LikedComments> likedCommentsToDelete = likedComsRepo.findAllByCommentId(comment.getId());
 
         if(!comment.isOriginal()){
@@ -193,5 +208,17 @@ public class CommentService {
     @Transactional
     public void deleteCommentFromBuild(DeleteEntityEvent event){
         System.out.println(event.toString());
+    }
+
+    private UserResponse resolveUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String keycloakId = jwt.getSubject(); // "sub" claim
+        var user = userClient.findUserByKeycloakId(keycloakId).getBody();
+        return user != null ? user : null;
     }
 }

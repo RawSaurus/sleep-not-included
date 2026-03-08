@@ -38,7 +38,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Configuration
 @EnableWebSecurity
-//@EnableMethodSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -78,32 +78,6 @@ public class SecurityConfig {
                                 jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
         .build();
     }
-
-//    private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
-//
-//        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-//
-//        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-//            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-//
-//            if (resourceAccess == null) return List.of();
-//
-//            Map<String, Object> client =
-//                    (Map<String, Object>) resourceAccess.get("oauth2-pkce");
-//
-//            if (client == null) return List.of();
-//
-//            List<String> roles = (List<String>) client.get("roles");
-//
-//            if (roles == null) return List.of();
-//
-//            return roles.stream()
-//                    .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
-//                    .toList();
-//        });
-//
-//        return converter;
-//    }
 
     private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor(){
         JwtAuthenticationConverter jwtAuthenticationConverter =

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -68,6 +69,7 @@ public class CommentController {
     }
 
     @PostMapping("/{userId}/{buildId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable Long userId,
             @PathVariable Long buildId,
@@ -77,6 +79,7 @@ public class CommentController {
     }
 
     @PostMapping("/respond/{userId}/{commentId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> respond(
             @PathVariable Long userId,
             @PathVariable Long commentId,
@@ -86,6 +89,7 @@ public class CommentController {
     }
 
     @PostMapping("/like/{userId}/{commentId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> likeComment(
             @PathVariable Long userId,
             @PathVariable Long commentId
@@ -95,6 +99,7 @@ public class CommentController {
     }
 
     @PutMapping("/{userId}/{buildId}/{id}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long userId,
             @PathVariable Long buildId,
@@ -105,6 +110,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> deleteComment(@PathVariable Long id){
         return ResponseEntity.ok(commentService.deleteComment(id));
     }

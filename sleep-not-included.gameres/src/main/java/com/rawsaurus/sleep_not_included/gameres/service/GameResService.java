@@ -2,6 +2,7 @@ package com.rawsaurus.sleep_not_included.gameres.service;
 
 import com.rawsaurus.sleep_not_included.gameres.dto.ResSimpleRequest;
 import com.rawsaurus.sleep_not_included.gameres.dto.ResSimpleResponse;
+import com.rawsaurus.sleep_not_included.gameres.dto.request.ResRequest;
 import com.rawsaurus.sleep_not_included.gameres.dto.response.ResResponse;
 import com.rawsaurus.sleep_not_included.gameres.mapper.GameResMapper;
 import com.rawsaurus.sleep_not_included.gameres.mapper.ResMapper;
@@ -112,25 +113,68 @@ public class GameResService {
 //        GameRes res = resMapper.t
 //    }
 
-    public ResSimpleResponse findById(Long id){
+    public ResSimpleResponse findSimpleById(Long id) {
         return gameResMapper.toResponse(
                 gameResRepo.findById(id)
-                        .orElseThrow(() -> new EntityNotFoundException("Resource not found"))
+                        .orElseThrow(() -> new EntityNotFoundException("Resource not found: " + id))
         );
     }
 
-    public ResSimpleResponse findByName(String name){
+    public ResSimpleResponse findSimpleByName(String name) {
         return gameResMapper.toResponse(
                 gameResRepo.findByName(name)
-                        .orElseThrow(() -> new EntityNotFoundException("Res not found"))
+                        .orElseThrow(() -> new EntityNotFoundException("Resource not found: " + name))
         );
     }
 
-    public ResSimpleResponse createRes(ResSimpleRequest request){
-        return gameResMapper.toResponse(
-                gameResRepo.save(
-                        gameResMapper.toEntity(request)
-                )
+    public List<ResSimpleResponse> findAllSimpleByType(ResType type) {
+        return gameResRepo.findAllByResType(type)
+                .stream()
+                .map(gameResMapper::toResponse)
+                .toList();
+    }
+
+    public ResResponse findById(Long id) {
+        return resMapper.toResponse(
+                gameResRepo.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Resource not found: " + id))
         );
     }
+
+    public ResResponse findByName(String name) {
+        return resMapper.toResponse(
+                gameResRepo.findByName(name)
+                        .orElseThrow(() -> new EntityNotFoundException("Resource not found: " + name))
+        );
+    }
+
+    public List<ResResponse> findAllByType(ResType type) {
+        return gameResRepo.findAllByResType(type)
+                .stream()
+                .map(resMapper::toResponse)
+                .toList();
+    }
+
+    public ResResponse save(ResRequest request) {
+        return resMapper.toResponse(
+                gameResRepo.save(resMapper.toEntity(request))
+        );
+    }
+
+    public ResResponse update(Long id, ResRequest request) {
+        GameRes existing = gameResRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Resource not found: " + id));
+        GameRes updated = resMapper.toEntity(request);
+        updated.setId(existing.getId());
+        updated.setCreatedAt(existing.getCreatedAt());
+        return resMapper.toResponse(gameResRepo.save(updated));
+    }
+
+    public void delete(Long id) {
+        if (!gameResRepo.existsById(id)) {
+            throw new EntityNotFoundException("Resource not found: " + id);
+        }
+        gameResRepo.deleteById(id);
+    }
+
 }

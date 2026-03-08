@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -64,6 +65,7 @@ public class UserController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request){
         return ResponseEntity.ok(userService.createUser(request));
     }
@@ -74,6 +76,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long userId,
             @Valid @RequestBody UserRequest request
@@ -82,6 +85,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId){
         return ResponseEntity.ok(userService.deleteUser(userId));
     }
