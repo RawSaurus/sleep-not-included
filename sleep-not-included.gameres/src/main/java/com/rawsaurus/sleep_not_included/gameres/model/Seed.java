@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @Entity
 public class Seed extends GameRes {
 
+    private String test;
     //growth
     //recipe
 }

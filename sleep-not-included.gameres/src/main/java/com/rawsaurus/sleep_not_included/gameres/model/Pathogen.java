@@ -20,8 +20,8 @@ public class Pathogen extends GameRes {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "value", column = @Column(name = "temperature_min")),
-            @AttributeOverride(name = "unit", column = @Column(name = "temperature_max")),
+            @AttributeOverride(name = "min", column = @Column(name = "temperature_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "temperature_max")),
             @AttributeOverride(name = "unit", column = @Column(name = "temperature_unit"))
     })
     private RangeValue temperature;

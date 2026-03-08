@@ -17,4 +17,5 @@ import java.time.LocalDateTime;
 @Entity
 public class Other extends GameRes {
 
+    private String test;
 }

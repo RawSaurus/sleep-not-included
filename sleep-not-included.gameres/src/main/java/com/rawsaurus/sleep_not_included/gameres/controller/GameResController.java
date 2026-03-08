@@ -1,8 +1,8 @@
 package com.rawsaurus.sleep_not_included.gameres.controller;
 
-import com.rawsaurus.sleep_not_included.gameres.dto.GameResRequest;
-import com.rawsaurus.sleep_not_included.gameres.dto.GameResResponse;
-import com.rawsaurus.sleep_not_included.gameres.dto.ResResponse;
+import com.rawsaurus.sleep_not_included.gameres.dto.ResSimpleRequest;
+import com.rawsaurus.sleep_not_included.gameres.dto.ResSimpleResponse;
+import com.rawsaurus.sleep_not_included.gameres.dto.response.ResResponse;
 import com.rawsaurus.sleep_not_included.gameres.service.GameResService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,17 +32,17 @@ public class GameResController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GameResResponse> findById(@PathVariable Long id){
+    public ResponseEntity<ResSimpleResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(gameResService.findById(id));
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<GameResResponse> findByName(@PathVariable String name){
+    public ResponseEntity<ResSimpleResponse> findByName(@PathVariable String name){
         return ResponseEntity.ok(gameResService.findByName(name));
     }
 
     @PostMapping
-    public ResponseEntity<GameResResponse> createRes(@RequestBody GameResRequest request){
+    public ResponseEntity<ResSimpleResponse> createRes(@RequestBody ResSimpleRequest request){
         return ResponseEntity.ok(gameResService.createRes(request));
     }
 

@@ -1,10 +1,7 @@
 package com.rawsaurus.sleep_not_included.gameres.model;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -13,6 +10,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Embeddable
+@Builder
 public class RangeValue implements Serializable {
 
     private int min;

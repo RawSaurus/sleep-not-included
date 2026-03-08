@@ -19,8 +19,8 @@ public class Comet extends GameRes {
     private Long drops;
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "value", column = @Column(name = "composition_min")),
-            @AttributeOverride(name = "unit", column = @Column(name = "composition_max")),
+            @AttributeOverride(name = "min", column = @Column(name = "composition_min")),
+            @AttributeOverride(name = "max", column = @Column(name = "composition_max")),
             @AttributeOverride(name = "unit", column = @Column(name = "composition_unit"))
     })
     private RangeValue composition;
