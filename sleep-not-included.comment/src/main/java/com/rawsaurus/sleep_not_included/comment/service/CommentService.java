@@ -207,7 +207,13 @@ public class CommentService {
     @RabbitListener(queues = RabbitMQConfig.COMMENT_BUILD_DELETED_QUEUE)
     @Transactional
     public void deleteCommentFromBuild(DeleteEntityEvent event){
-        System.out.println(event.toString());
+        List<Comment> commentsToDelete = commentRepo.findAllByBuildId(event.id());
+        List<LikedComments> likedCommentsToDelete = likedComsRepo.findAllByCommentIdIn(
+                commentsToDelete.stream().map(c -> c.getId()).toList()
+        );
+
+        commentRepo.deleteAll(commentsToDelete);
+        likedComsRepo.deleteAll(likedCommentsToDelete);
     }
 
     private UserResponse resolveUser() {

@@ -11,8 +11,9 @@ public record BuildRequest(
         @NotBlank(message = "Name can't be blank")
         @Size(max = 100, message = "Name can't be longer than 100 characters")
         String name,
-        @NotBlank(message = "Description can't be blank")
+        @NotBlank(message = "Short description can't be blank")
         @Size(max = 1000, message = "Description can't be longer than 1000 characters")
+        String shortDescription,
         String description,
         List<Long> tagId
 ) {

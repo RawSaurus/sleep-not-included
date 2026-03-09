@@ -5,7 +5,7 @@ import java.util.Set;
 public record BuildResponse(
         Long id,
         String name,
-        String description,
+        String shortDescription,
         Set<TagResponse> tagsId,
         Long creatorId
 ) {

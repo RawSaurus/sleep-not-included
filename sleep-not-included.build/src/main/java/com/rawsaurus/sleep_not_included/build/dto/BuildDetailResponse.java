@@ -10,6 +10,7 @@ import java.util.List;
 public record BuildDetailResponse(
     Long id,
     String name,
+    String shortDescription,
     String description,
     int likes,
     LocalDateTime createdAt,

@@ -6,7 +6,7 @@ import java.util.List;
 public record BuildResponse(
         Long id,
         String name,
-        String description,
+        String shortDescription,
         List<TagResponse> tags,
         Long creatorId,
         Integer likes) {

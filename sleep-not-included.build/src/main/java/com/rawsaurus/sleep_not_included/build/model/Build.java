@@ -2,6 +2,7 @@ package com.rawsaurus.sleep_not_included.build.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -23,6 +24,8 @@ public class Build {
     private Long id;
     @Column(unique = true, nullable = false)
     private String name;
+    private String shortDescription;
+    @Lob
     private String description;
 
     private int likes;

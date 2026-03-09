@@ -215,36 +215,23 @@ public class BuildService {
      *   - tags only → filter by tag membership
      *   - both      → intersect: builds matching name AND having all selected tags
      *
-     * Add to BuildService.
      */
     public Page<BuildDetailResponse> findAllWithFilters(String name, List<Long> tagIds, Pageable pageable) {
-
-//        List<TagResponse> tags = null;
-//        if (tagIds != null && !tagIds.isEmpty()) {
-//            // Resolve tag IDs to TagResponse objects via the tag client
-//            tags = resolveTagsByIds(tagIds);
-//        }
 
         boolean hasName = name != null && !name.isBlank();
         boolean hasTags = tagIds != null && !tagIds.isEmpty();
 
-        // ── No filters: return everything ──────────────────
         if (!hasName && !hasTags) {
             return findAllBuildDetails(pageable);
         }
 
-        // ── Name only ──────────────────────────────────────
         if (hasName && !hasTags) {
             return findAllBuildDetailsByName(name, pageable);
         }
 
-        // ── Tags only ──────────────────────────────────────
         if (!hasName && hasTags) {
             return findAllBuildDetailsByTags(tagIds, pageable);
         }
-        // ── Both name AND tags ─────────────────────────────
-        // 1. Get build IDs that match all selected tags
-//        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
         List<BuildTags> buildTagMatches = buildTagsRepo.findAllByBuildIdIn(
                 buildTagsRepo.findAllByTagIdIn(tagIds, PageRequest.of(0, Integer.MAX_VALUE))
                         .getContent()
@@ -254,7 +241,6 @@ public class BuildService {
                         .toList()
         );
 
-        // Retain only builds that have ALL selected tags (not just any)
         Map<Long, Long> tagCountByBuild = buildTagMatches.stream()
                 .filter(bt -> tagIds.contains(bt.getTagId()))
                 .collect(Collectors.groupingBy(BuildTags::getBuildId, Collectors.counting()));
@@ -268,7 +254,6 @@ public class BuildService {
             return Page.empty(pageable);
         }
 
-        // 2. From those IDs, further filter by name (LIKE)
         List<Build> nameMatches = buildRepo.searchBuilds(name, Pageable.unpaged())
                 .stream()
                 .filter(b -> buildIdsWithAllTags.contains(b.getId()))
@@ -300,84 +285,6 @@ public class BuildService {
 
         return new PageImpl<>(responses, pageable, nameMatches.size());
     }
-
-        //would be too bad on performance, solve by join on tables
-//    public Page<BuildDetailResponse> findAllWithFilters(String name, List<TagResponse> tags, Pageable pageable){
-//        //nothing
-//        if((name == null || name.isEmpty()) && (tags == null || tags.isEmpty())){
-//            return findAllBuildDetails(pageable);
-//        }
-//        //name
-//        if(tags == null || tags.isEmpty()) {
-//            return findAllBuildDetailsByName(name, pageable);
-//        }
-//        //tag
-//        if(name == null || name.isEmpty()) {
-//            return findAllBuildDetailsByTags(tags, pageable);
-//        }
-//        //name && tags
-//        return null;
-//    }
-
-//    public Page<BuildResponse> findAll(Pageable pageable){
-//        return buildRepo.findAll(pageable)
-//                .map(buildMapper::toResponse);
-//    }
-
-//    public Page<BuildResLoggedIn> findAllLoggedIn(Long userId, Pageable pageable){ var user = userClient.findUserById(userId).getBody();
-//        if (user == null){
-//            throw new EntityNotFoundException("User not found");
-//        }
-//
-//        Page<Build> builds = buildRepo.findAll(pageable);
-//        List<BuildResLoggedIn> res = new ArrayList<>();
-//
-//        for(Build b : builds.getContent()){
-//            res.add(
-//                    new BuildResLoggedIn(
-//                            b.getId(),
-//                            b.getName(),
-//                            b.getDescription(),
-//                            b.getCreatorId(),
-//                            b.getLikes(),
-//                            likedBuildsRepo.existsByUserIdAndBuildId(userId, b.getId())
-//                    )
-//            );
-//        }
-//        return new PageImpl<>(res);
-//    }
-
-//    public List<BuildTags> findAllBuildsByTags(List<Tag> tags){
-//        return null;
-//    }
-//
-//    public List<TagResponse> findAll(){
-//        return tagRepo.findAll()
-//                .stream()
-//                .map(tagMapper::toResponse)
-//                .collect(Collectors.toList());
-//    }
-//
-//    public List<TagResponse> findAllByBuild(Long buildId){
-//        //check build
-//        List<BuildTags> tagIds = buildTagsRepo.findAllByBuildId(buildId);
-//        List<TagResponse> tags = new ArrayList<>();
-//
-//        for(BuildTags b : tagIds){
-//            tags.add(
-//                    tagMapper.toResponse(
-//                            tagRepo.findById(b.getTagId())
-//                                    .orElseThrow(() -> new EntityNotFoundException("Tag not found"))
-//                    )
-//            );
-//        }
-//        return tags;
-//    }
-    //rework
-//    public Page<BuildResponse> findAllWithFilters(Set<Long> tags, Set<Long> dlc, Pageable pageable){
-//        return buildRepo.findAllByDlcIdAndTagsId(dlc, tags, pageable)
-//                .map(buildMapper::toResponse);
-//    }
 
     public List<TagResponse> findAllTagsByBuild(Long buildId){
         List<BuildTags> buildTags = buildTagsRepo.findAllByBuildId(buildId);
@@ -682,6 +589,7 @@ public class BuildService {
         return new BuildDetailResponse(
                 build.getId(),
                 build.getName(),
+                build.getShortDescription(),
                 build.getDescription(),
                 build.getLikes(),
                 build.getCreatedAt(),
@@ -719,6 +627,7 @@ public class BuildService {
         return new BuildDetailResponse(
                 build.getId(),
                 build.getName(),
+                build.getShortDescription(),
                 build.getDescription(),
                 build.getLikes(),
                 build.getCreatedAt(),
