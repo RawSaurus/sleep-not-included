@@ -25,7 +25,7 @@ public class Build {
     @Column(unique = true, nullable = false)
     private String name;
     private String shortDescription;
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private int likes;

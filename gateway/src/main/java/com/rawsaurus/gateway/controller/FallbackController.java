@@ -5,57 +5,106 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/fallback")
 public class FallbackController {
 
-    @GetMapping("/user")
-    public Mono<ResponseEntity<String>> userFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("User service unavailable")
+    @RequestMapping("/user")
+    public Mono<ResponseEntity<Map<String, Object>>> userFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "user",
+                        "status", status.value(),
+                        "message", "User service is unavailable. Wait a while and retry"
+                ))
         );
     }
 
-    @GetMapping("/comment")
-    public Mono<ResponseEntity<String>> commentFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("Comment service unavailable")
+    @RequestMapping("/build")
+    public Mono<ResponseEntity<Map<String, Object>>> buildFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "build",
+                        "status", status.value(),
+                        "message", "Build service is unavailable. Wait a while and retry"
+                ))
         );
     }
 
-    @GetMapping("/tag")
-    public Mono<ResponseEntity<String>> tagFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("Tag service unavailable")
+    @RequestMapping("/comment")
+    public Mono<ResponseEntity<Map<String, Object>>> commentFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "comment",
+                        "status", status.value(),
+                        "message", "Comment service is unavailable. Wait a while and retry"
+                ))
         );
     }
 
-    @GetMapping("/build")
-    public Mono<ResponseEntity<String>> buildFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("Build service unavailable")
+    @RequestMapping("/tag")
+    public Mono<ResponseEntity<Map<String, Object>>> tagFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "tag",
+                        "status", status.value(),
+                        "message", "Tag service is unavailable. Wait a while and retry"
+                ))
         );
     }
 
-    @GetMapping("/gameres")
-    public Mono<ResponseEntity<String>> gameresFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("Resource service unavailable")
+    @RequestMapping("/res")
+    public Mono<ResponseEntity<Map<String, Object>>> gameresFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "Resource",
+                        "status", status.value(),
+                        "message", "Resource service is unavailable. Wait a while and retry"
+                ))
         );
     }
 
-    @GetMapping("/image")
-    public Mono<ResponseEntity<String>> imageFallback(){
-        return Mono.just(
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body("Image service unavailable")
+    @RequestMapping("/image")
+    public Mono<ResponseEntity<Map<String, Object>>> imageFallback(ServerWebExchange exchange){
+        String method = exchange.getRequest().getMethod().name();
+        HttpStatus status = isCircuitOpen(exchange)
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.GATEWAY_TIMEOUT;
+        return Mono.just(ResponseEntity.status(status).body(
+                Map.of(
+                        "service", "image",
+                        "status", status.value(),
+                        "message", "Image service is unavailable. Wait a while and retry"
+                ))
         );
+    }
+
+    private boolean isCircuitOpen(ServerWebExchange exchange) {
+        return exchange.getResponse().getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE;
     }
 }
