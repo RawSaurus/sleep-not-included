@@ -5,10 +5,10 @@ import lombok.Getter;
 @Getter
 public enum ImageType {
 
-    PROFILE_PIC("profile pic"),
-    BUILD_THUMBNAIL("build thumbnail"),
-    BUILD_IMAGE("build image"),
-    RES_IMAGE("res image");
+    PROFILE_PIC("profile_pic"),
+    BUILD_THUMBNAIL("build_thumbnail"),
+    BUILD_IMAGE("build_image"),
+    RES_IMAGE("res_image");
 
     private final String name;
 

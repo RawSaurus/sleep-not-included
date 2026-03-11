@@ -28,6 +28,7 @@ public class User {
     @Column(unique = true)
     private String email;
     private UserRole role;
+    private String profilePicUrl;
 
     @CreatedDate
     @Column(updatable = false, nullable = false)

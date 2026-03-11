@@ -98,12 +98,20 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
                     .build();
 
         } else {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            status = HttpStatus.BAD_REQUEST;
             body = ExceptionResponse.builder()
-                    .businessErrorDescription("Internal gateway error, contact the admin")
+                    .businessErrorCode(HttpStatus.BAD_REQUEST.value())
+                    .businessErrorDescription("Something went wrong")
                     .error(ex.getMessage())
                     .build();
         }
+//        } else {
+//            status = HttpStatus.INTERNAL_SERVER_ERROR;
+//            body = ExceptionResponse.builder()
+//                    .businessErrorDescription("Internal gateway error, contact the admin")
+//                    .error(ex.getMessage())
+//                    .build();
+//        }
 
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);

@@ -16,7 +16,16 @@ public class RabbitMQConfig {
     public static final String IMAGE_BUILD_DELETED_QUEUE = "image.build.deleted.queue";
     public static final String USER_EVENTS_EXCHANGE = "user.events";
     public static final String BUILD_EVENTS_EXCHANGE = "build.events";
-    public static final String ROUTING_KEY = "entity.deleted";
+    public static final String IMAGE_EVENTS_EXCHANGE = "image.events";
+    public static final String IMAGE_UPDATE_ROUTING_KEY = "image.user.updated";
+
+    @Bean
+    public TopicExchange imageUpdateTopicExchange(){
+        return ExchangeBuilder
+                .topicExchange(IMAGE_EVENTS_EXCHANGE)
+                .durable(true)
+                .build();
+    }
 
     @Bean
     public FanoutExchange userEventsExchange(){
@@ -61,5 +70,13 @@ public class RabbitMQConfig {
     @Bean
     public MessageConverter messageConverter(){
         return new JacksonJsonMessageConverter();
+    }
+
+    @Bean
+    public RabbitTemplate template(ConnectionFactory connectionFactory){
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(messageConverter());
+        template.setExchange(IMAGE_EVENTS_EXCHANGE);
+        return template;
     }
 }

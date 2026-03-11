@@ -2,6 +2,7 @@ package com.rawsaurus.sleep_not_included.user.service;
 
 import com.rawsaurus.sleep_not_included.user.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.user.dto.DeleteEntityEvent;
+import com.rawsaurus.sleep_not_included.user.dto.UpdateImageUrlEvent;
 import com.rawsaurus.sleep_not_included.user.dto.UserRequest;
 import com.rawsaurus.sleep_not_included.user.dto.UserResponse;
 import com.rawsaurus.sleep_not_included.user.mapper.UserMapper;
@@ -10,6 +11,7 @@ import com.rawsaurus.sleep_not_included.user.model.UserRole;
 import com.rawsaurus.sleep_not_included.user.repo.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -108,6 +110,14 @@ public class UserService {
         user.setEmail((String) keycloakUser.get("email"));
         user.setRole(UserRole.USER);
 
+        String token = keycloakAdminService.getAdminAccessToken();
+        keycloakAdminService.assignRealRoleToUser(
+                token,
+                user.getUsername(),
+                "USER",
+                keycloakId
+        );
+
         userRepo.save(user);
         return "User created successfully";
     }
@@ -134,5 +144,16 @@ public class UserService {
                 new DeleteEntityEvent("user", userId));
 
         return "User deleted successfully";
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.USER_IMAGE_UPDATE_QUEUE)
+    public void addProfilePicUrlToUser(UpdateImageUrlEvent event){
+        System.out.println("Id: " + event.userId() + "Url: " + event.imageUrl());
+        User user = userRepo.findById(event.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        user.setProfilePicUrl(event.imageUrl());
+
+        userRepo.save(user);
     }
 }

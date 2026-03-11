@@ -24,10 +24,18 @@ public class ImageController {
     private final ImageService imageService;
     @Value("${sni.message}")
     private String message;
+    @Value("${server.tomcat.max-swallow-size}")
+    private String maxSwallowSize;
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private String servletMaxFileSize;
+    @Value("${spring.servlet.multipart.max-request-size}")
+    private String maxRequestSize;
 
     @GetMapping("/test")
     public String test(){
-        return message;
+        return "Max Sallow Size: " + maxSwallowSize +"\n"
+                + "Servlet Max File Size: " + servletMaxFileSize + "\n"
+                + "Max Request Size: " + maxRequestSize;
     }
 
     @GetMapping("/{id}")

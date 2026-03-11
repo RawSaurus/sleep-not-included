@@ -7,6 +7,7 @@ import com.rawsaurus.sleep_not_included.image.config.RabbitMQConfig;
 import com.rawsaurus.sleep_not_included.image.dto.DeleteEntityEvent;
 import com.rawsaurus.sleep_not_included.image.dto.ImageResponse;
 import com.rawsaurus.sleep_not_included.image.dto.OwnerData;
+import com.rawsaurus.sleep_not_included.image.dto.UpdateImageUrlEvent;
 import com.rawsaurus.sleep_not_included.image.handler.ActionNotAllowed;
 import com.rawsaurus.sleep_not_included.image.handler.StorageException;
 import com.rawsaurus.sleep_not_included.image.mapper.ImageMapper;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.core.io.Resource;
@@ -41,6 +43,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.rawsaurus.sleep_not_included.image.config.RabbitMQConfig.*;
 import static com.rawsaurus.sleep_not_included.image.model.ImageType.*;
@@ -64,18 +67,21 @@ public class ImageService {
     private final GameResClient resClient;
     private final MinioClient minioClient;
 
+    private final RabbitTemplate rabbitTemplate;
+
     @Value("${sni.minio.url}")
     private String minioUrl;
     @Value("${sni.minio.bucket}")
     private String bucket;
 
-    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient, GameResClient resClient, MinioClient minioClient) {
+    public ImageService(ImageRepository imageRepo, ImageMapper imageMapper, UserClient userClient, BuildClient buildClient, GameResClient resClient, MinioClient minioClient, RabbitTemplate rabbitTemplate) {
         this.imageRepo= imageRepo;
         this.imageMapper = imageMapper;
         this.userClient = userClient;
         this.buildClient = buildClient;
         this.resClient = resClient;
         this.minioClient = minioClient;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public ImageResponse findById(Long id){
@@ -186,6 +192,16 @@ public class ImageService {
                 .ownerService(owner.ownerService())
                 .ownerId(owner.id())
                 .build();
+
+        if(type == PROFILE_PIC) {
+            Image savedImage = imageRepo.save(image);
+
+            sendProfilePicUrlToUser(owner.id(), savedImage.getUrl());
+
+            return imageMapper.toResponse(
+                    savedImage
+            );
+        }
 
         return imageMapper.toResponse(
                 imageRepo.save(image)
@@ -326,17 +342,50 @@ public class ImageService {
 
         OwnerData owner = checkOwner(type, name);
 
-        Image imageToSave = imageRepo
-                .findImageByStoragePathAndOwnerId(buildObjectKeyPrefix(type, owner.id()), owner.id())
-                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+        Optional<Image> imageToSave = imageRepo
+                .findImageByTypeAndOwnerId(type, owner.id());
+
+        //not sure about this. Test more
+        if(imageToSave.isEmpty()){
+            String imageKey = buildObjectKey(type, owner.id(), file.getOriginalFilename());
+
+            byte[] processedImage = resizeImage(file, owner.width(), owner.height());
+            uploadToMinio(imageKey, processedImage, "image/jpeg");
+
+            String url = buildUrl(imageKey);
+
+            Image image = Image.builder()
+                    .filename(file.getOriginalFilename())
+                    .type(type)
+                    .size(file.getSize())
+                    .storagePath(imageKey)
+                    .url(url)
+                    .ownerService(owner.ownerService())
+                    .ownerId(owner.id())
+                    .build();
+
+            Image savedImage = imageRepo.save(image);
+
+            sendProfilePicUrlToUser(owner.id(), savedImage.getUrl());
+
+            return imageMapper.toResponse(
+                    savedImage
+            );
+        }
 
         byte[] processedImage = resizeImage(file, owner.width(), owner.height());
-        uploadToMinio(imageToSave.getStoragePath(), processedImage, "image/jpeg");
+        uploadToMinio(imageToSave.get().getStoragePath(), processedImage, "image/jpeg");
 
-        imageToSave.setFilename(file.getOriginalFilename());
-        imageToSave.setSize(file.getSize());
+        imageToSave.get().setFilename(file.getOriginalFilename());
+        imageToSave.get().setSize(file.getSize());
 
-        return imageMapper.toResponse(imageRepo.save(imageToSave));
+        Image savedImage = imageRepo.save(imageToSave.get());
+
+        sendProfilePicUrlToUser(owner.id(), savedImage.getUrl());
+
+        return imageMapper.toResponse(
+                savedImage
+        );
     }
 
 //    @Transactional
@@ -486,6 +535,15 @@ public class ImageService {
         } catch (Exception e) {
             throw new StorageException("Couldn't locate bucket because: " + e.getMessage());
         }
+    }
+
+    private void sendProfilePicUrlToUser(Long userId, String profilePicUrl){
+
+        rabbitTemplate.convertAndSend(
+                IMAGE_UPDATE_ROUTING_KEY,
+                new UpdateImageUrlEvent(userId, profilePicUrl)
+        );
+
     }
 
     private OwnerData checkOwner(ImageType type, String name){

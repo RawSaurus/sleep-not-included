@@ -8,6 +8,7 @@ public record UserResponse(
         String username,
         String email,
         UserRole role,
+        String profilePicUrl,
         LocalDateTime createdAt
 ){
 }

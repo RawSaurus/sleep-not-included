@@ -14,9 +14,33 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String USER_EVENTS_EXCHANGE = "user.events";
+    public static final String IMAGE_EVENTS_EXCHANGE = "image.events";
+    public static final String IMAGE_UPDATE_ROUTING_KEY = "image.user.updated";
+    public static final String USER_IMAGE_UPDATE_QUEUE = "user.image.update.queue";
 
+    @Bean
+    public TopicExchange imageUpdateTopicExchange(){
+        return ExchangeBuilder
+                .topicExchange(IMAGE_EVENTS_EXCHANGE)
+                .durable(true)
+                .build();
+    }
 
-    @Bean FanoutExchange fanoutExchange(){
+    @Bean
+    public Queue userImageUpdateQueue(){
+        return QueueBuilder.durable(USER_IMAGE_UPDATE_QUEUE).build();
+    }
+
+    @Bean
+    public Binding userImageUpdateBinding(){
+        return BindingBuilder
+                .bind(userImageUpdateQueue())
+                .to(imageUpdateTopicExchange())
+                .with(IMAGE_UPDATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public FanoutExchange fanoutExchange(){
         return ExchangeBuilder
                 .fanoutExchange(USER_EVENTS_EXCHANGE)
                 .durable(true)
