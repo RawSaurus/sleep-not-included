@@ -1,0 +1,61 @@
+# =============================================================================
+# Dockerfile.spring  —  shared template for ALL Spring Boot microservices
+# Usage: build from each service's root directory
+#   docker build -f ../docker/dockerfiles/Dockerfile.spring \
+#                --build-arg SERVICE_PORT=8081 \
+#                -t sni/user-service .
+#
+# GraalVM note: we use eclipse-temurin (OpenJDK on GraalVM CE ships as a JRE
+# at runtime — the compiler is only needed at build time, so the runtime stage
+# stays small). If you later want AOT native images, see Dockerfile.spring.native
+# =============================================================================
+
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM ghcr.io/graalvm/native-image-community:21-muslib AS build
+
+WORKDIR /build
+
+# Copy Maven wrapper and pom first — Docker caches this layer separately
+# so re-builds only re-download deps when pom.xml changes
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B -q
+
+# Now copy source and build the fat jar
+COPY src ./src
+RUN ./mvnw package -DskipTests -B -q
+
+# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
+# Use GraalVM JRE 21 for runtime — smaller than the full SDK, compatible with
+# the fat jar. If you want a stock JRE instead, swap to:
+#   eclipse-temurin:21-jre-alpine
+FROM ghcr.io/graalvm/jdk-community:21
+
+WORKDIR /app
+
+# Non-root user for security
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
+# Copy only the fat jar from the build stage
+COPY --from=build /build/target/*.jar app.jar
+
+# Pre-create logs directory with correct ownership
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
+
+USER appuser
+
+# Spring Boot default port — override with SERVICE_PORT build arg or
+# SPRING_SERVER_PORT env var at runtime
+ARG SERVICE_PORT=8080
+EXPOSE ${SERVICE_PORT}
+
+# JVM tuning for containers:
+#   -XX:+UseContainerSupport   — respect Docker memory limits (on by default in Java 11+)
+#   -XX:MaxRAMPercentage=75    — use 75% of container RAM for heap
+#   -XX:+OptimizeStringConcat  — minor GraalVM JIT optimization
+#   -Djava.security.egd        — faster random for Tomcat startup
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]

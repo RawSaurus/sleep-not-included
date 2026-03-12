@@ -1,0 +1,144 @@
+# =============================================================================
+# docker-compose.infra.yml  —  Infrastructure services
+#
+# Start first: docker compose -f docker-compose.infra.yml up -d
+# These are stateful services that must be healthy before your apps start.
+# =============================================================================
+
+name: sni_infra
+
+networks:
+  sni_backend:
+    driver: bridge
+    name: sni_backend
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  minio_data:
+  keycloak_data:
+
+services:
+
+  #PostgresQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: sni_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PSQL_USERNAME}
+      POSTGRES_PASSWORD: ${PSQL_PASSWORD}
+      POSTGRES_DB: ${PSQL_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-init.db.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - sni_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PSQL_USERNAME} -d ${PSQL_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  #PGAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sni_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - sni_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  #RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: sni_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - sni_backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  #MinIO
+  minio:
+    image: minio/minio
+    container_name: sni_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    networks:
+      - sni_backend
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  #Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: sni_keycloak
+    restart: unless-stopped
+    command: start
+    environment:
+      #Admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      #Database
+      KC_DB: postgres
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_SCHEMA: ${KC_DB_SCHEMA}
+      #Hostname
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      #Health endpoints
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "8443:8080"
+    networks:
+      - sni_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/health/ready || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s

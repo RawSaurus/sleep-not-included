@@ -1,0 +1,33 @@
+# =============================================================================
+# Dockerfile.gateway  —  Spring Cloud Gateway (WebFlux / reactive)
+# Port: 8080
+# =============================================================================
+
+FROM ghcr.io/graalvm/native-image-community:21-muslib AS build
+
+WORKDIR /build
+
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B -q
+
+COPY src ./src
+RUN ./mvnw package -DskipTests -B -q
+
+# ── Runtime ───────────────────────────────────────────────────────────────────
+FROM ghcr.io/graalvm/jdk-community:21
+
+WORKDIR /app
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
+COPY --from=build /build/target/*.jar app.jar
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
+
+USER appuser
+EXPOSE 8080
+
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]

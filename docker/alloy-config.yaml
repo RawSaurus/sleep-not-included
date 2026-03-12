@@ -1,0 +1,47 @@
+# =============================================================================
+# alloy-config.yaml
+# =============================================================================
+
+#Discover running Docker containers
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+#Relabel containers to extract useful log labels
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  # Strip the leading slash from container names (e.g. /sni_gateway -> sni_gateway)
+  rule {
+  source_labels = ["__meta_docker_container_name"]
+  regex         = "/(.*)"
+  target_label  = "container"
+  }
+
+  # Use the Docker Compose service name as the service label in Loki
+  rule {
+  source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+  target_label  = "service"
+  }
+
+  # Use the Docker Compose project name 
+  rule {
+  source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+  target_label  = "compose_project"
+  }
+}
+
+#Collect logs from all discovered containers
+loki.source.docker "default" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.docker_logs.output
+
+  forward_to = [loki.write.default.receiver]
+}
+
+#Ship logs to Loki
+loki.write "default" {
+  endpoint {
+    url = "http://sni_loki:3100/loki/api/v1/push"
+  }
+}

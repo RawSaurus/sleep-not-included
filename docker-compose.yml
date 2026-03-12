@@ -60,8 +60,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
     ports:
-      - "9002:9000"   # S3 API — used by your image service
-      - "9003:9001"   # Web console — browse buckets at localhost:9001
+      - "9002:9000"
+      - "9003:9001"
     volumes:
       - minio_data:/data
     networks:
