@@ -14,7 +14,7 @@ public enum BusinessErrorCodes {
     UNAUTHORIZED(401, HttpStatus.UNAUTHORIZED, "Authentication required"),
     ACCESS_DENIED(403, FORBIDDEN, "You do not have permission for this action"),
     ROUTE_NOT_FOUND(404, NOT_FOUND, "Requested route not found");
-    ;
+
 
     @Getter
     private final int code;

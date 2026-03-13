@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "SLEEP-NOT-INCLUDED-GAMERES", configuration = FeignSecurityConfig.class)
 public interface GameResClient {
 
-    String ROOT = "/api/v1/res";
+    String BASE = "/api/v1/res";
 
-    @GetMapping(ROOT + "/{id}")
+    @GetMapping(BASE + "/{id}")
     ResponseEntity<GameResResponse> findById(@PathVariable Long id);
 
-    @GetMapping(ROOT + "/name/{name}")
+    @GetMapping(BASE + "/name/{name}")
     ResponseEntity<GameResResponse> findByName(@PathVariable String name);
 }

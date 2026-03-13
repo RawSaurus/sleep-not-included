@@ -92,47 +92,6 @@ public class SecurityConfig {
         .build();
     }
 
-//    @Bean
-//    @Order(0)
-//    public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
-//        return http
-//                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(
-//                                        "/swagger-ui.html",
-//                                        "/swagger-ui/**",
-//                                        "/v3/api-docs/**",
-//                                        "/webjars/**",
-//                                        "/swagger-resources/**",
-//                                        "/api-docs/**",
-//                                        "/api/*/v3/api-docs",
-//                                        "/api/*/swagger-ui/**",
-//                                        "/actuator/health",
-//                                        "/actuator/info",
-//                                        "/actuator/prometheus"
-//                        )
-//                )
-//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-//                .authorizeExchange(exchange -> exchange.anyExchange().permitAll())
-////                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.authenticationManager()))
-//                .build();
-//    }
-
-//    @Bean
-//    @Order(1)
-//    public SecurityWebFilterChain apiSecurityWebFilterChain(ServerHttpSecurity http) {
-//        return http
-//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-//                .authorizeExchange(exchange -> exchange
-//                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-//                        .anyExchange().authenticated()
-//                )
-//                .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(
-//                        jwt -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())
-//                ))
-//                .build();
-//    }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

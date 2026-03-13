@@ -22,7 +22,6 @@ public class RateLimiterFilter implements GlobalFilter, Ordered {
     private final Map<String, RateLimiter> rateLimiters;
 
     public RateLimiterFilter(RateLimiterRegistry rateLimiterRegistry) {
-        // Map route path prefixes to their rate limiter instances
         this.rateLimiters = Map.of(
                 "/user",    rateLimiterRegistry.rateLimiter("userRL"),
                 "/build",   rateLimiterRegistry.rateLimiter("buildRL"),

@@ -1,8 +1,8 @@
 # =============================================================================
-# docker-compose.observability.yml  —  Grafana, Loki, Prometheus, Zipkin, Alloy
+# docker-compose.observability.yaml  —  Grafana, Loki, Prometheus, Zipkin, Alloy
 #
 # Start after infra and apps:
-#   docker compose -f docker-compose.observability.yml up -d
+#   docker compose -f docker-compose.observability.yaml up -d
 # =============================================================================
 
 name: sni_observability
@@ -41,7 +41,7 @@ services:
     container_name: sni_prometheus
     restart: unless-stopped
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -65,7 +65,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki-config.yml:/etc/loki/config.yml:ro
+      - ./loki-config.yaml:/etc/loki/config.yml:ro
       - loki_data:/loki
     command: -config.file=/etc/loki/config.yml
     networks:
@@ -103,7 +103,7 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml:ro
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USERNAME}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}

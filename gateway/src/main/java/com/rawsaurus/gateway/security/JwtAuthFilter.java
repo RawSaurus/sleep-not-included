@@ -13,13 +13,10 @@ import reactor.core.publisher.Mono;
 //
 //    @Override
 //    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-//        System.out.println("HEEEEEEEELP");
 //        String authHeader = exchange.getRequest()
 //                .getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 //        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            System.out.println("TEEEEEST");
 //            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-//            System.out.println("RESSSSSSPONSE: " + exchange.getResponse());
 //            return exchange.getResponse().setComplete();
 //        }
 //

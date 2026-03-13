@@ -1,6 +1,5 @@
 package com.rawsaurus.sleep_not_included.comment.service;
 
-import ch.qos.logback.core.joran.spi.ActionException;
 import com.rawsaurus.sleep_not_included.comment.client.BuildClient;
 import com.rawsaurus.sleep_not_included.comment.client.UserClient;
 import com.rawsaurus.sleep_not_included.comment.config.RabbitMQConfig;
@@ -26,11 +25,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -81,7 +78,6 @@ public class CommentService {
     }
 
     public CommentResponse createComment(Long buildId, CommentRequest request){
-//        var user = userClient.findUser(userId).getBody();
         var user = resolveUser();
 
         var build = buildClient.findById(buildId).getBody();

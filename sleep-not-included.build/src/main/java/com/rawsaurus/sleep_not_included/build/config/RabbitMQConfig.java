@@ -16,8 +16,6 @@ public class RabbitMQConfig {
     public static final String USER_EVENT_EXCHANGE = "user.events";
     public static final String BUILD_EVENT_EXCHANGE = "build.events";
     public static final String TAG_EVENT_EXCHANGE = "tag.events";
-    public static String routingKey = "entity.deleted";
-
 
     @Bean
     public FanoutExchange userEventsExchange(){

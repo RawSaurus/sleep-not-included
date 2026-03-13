@@ -1,8 +1,5 @@
 package com.rawsaurus.sleep_not_included.build.dto;
 
-import lombok.Value;
-
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 

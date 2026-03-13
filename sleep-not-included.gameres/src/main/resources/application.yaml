@@ -5,19 +5,87 @@ spring:
     import: env.properties, optional:configserver:http://localhost:8888
   application:
     name: sleep-not-included-gameres
-  datasource:
-    url: jdbc:postgresql://localhost:5432/sleep-not-included-gameres
-    username: ${PSQL_USERNAME}
-    password: ${PSQL_PASSWORD}
-  jpa:
-    database: postgresql
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-sni:
-  message: "test"
-server:
-  port: 8086
-  servlet:
-    context-path: /api/v1/
+#-------------------------------------------------------------
+# Display config for dev profile with dummy data
+#-------------------------------------------------------------
+#  datasource:
+#    url: dummy
+#    username: dummy
+#    password: dummy
+#    jpa:
+#      database: postgresql
+#      show-sql: false
+#      hibernate:
+#        ddl-auto: validate
+#      database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    rabbitmq:
+#      host: dummy
+#      port: dummy
+#      username: dummy
+#      password: dummy
+#    security:
+#      oauth2:
+#        resourceserver:
+#          jwt:
+#            issuer-uri: dummy
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    prometheus:
+#      enabled: true
+#  metrics:
+#    tags:
+#      application: ${spring.application.name}
+#  health:
+#    circuitbreakers:
+#      enabled: true
+#  tracing:
+#    sampling:
+#      probability: 1.0
+#
+#eureka:
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    serviceUrl:
+#      defaultZone: dummy
+#
+#logging:
+#  level:
+#    root: INFO
+#  file:
+#    name: logs/game-res.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5mb
+#      max-history: 7
+#
+#sni:
+#  message: "dev env"
+#  security:
+#    admin-username: dummy
+#    admin-password: dummy
+#    keycloak-server-url: dummy
+#    realm: dummy
+#    client-id: dummy
+#    client-id-frontend: dummy
+#    client-uuid: dummy
+#    client-uuid-frontend: dummy
+#    internal-api-key: dummy
+#
+#server:
+#  port: dummy
+#  servlet:
+#    context-path: /api/v1/
+#
+#springdoc:
+#  api-docs:
+#    enabled: true
+#    path: /v3/api-docs
+#  swagger-ui:
+#    enabled: true
+#    path: /swagger-ui.html

@@ -13,7 +13,6 @@ public class RabbitMQConfig {
     public static final String COMMENT_BUILD_DELETED_QUEUE = "comment.build.deleted.queue";
     public static final String USER_EVENTS_EXCHANGE = "user.events";
     public static final String BUILD_EVENTS_EXCHANGE = "build.events";
-    public static final String ROUTING_KEY = "entity.deleted";
 
     @Bean
     public FanoutExchange userEventsExchange(){
@@ -59,12 +58,4 @@ public class RabbitMQConfig {
     public MessageConverter messageConverter(){
         return new JacksonJsonMessageConverter();
     }
-
-//    @Bean
-//    public RabbitTemplate template(ConnectionFactory connectionFactory){
-//        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-//        template.setMessageConverter(messageConverter());
-//        template.setExchange(exchangeName);
-//        return template;
-//    }
 }

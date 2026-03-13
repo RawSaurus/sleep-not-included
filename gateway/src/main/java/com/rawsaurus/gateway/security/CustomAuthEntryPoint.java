@@ -18,7 +18,6 @@ public class CustomAuthEntryPoint implements ServerAuthenticationEntryPoint {
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
-        System.out.println("ex \n" + ex.getMessage() + "\n" + Arrays.toString(ex.getStackTrace()));
         if (ex instanceof InvalidBearerTokenException) {
             ServerHttpResponse response = exchange.getResponse();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);

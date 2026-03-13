@@ -43,7 +43,6 @@ public class KeycloakAdminService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
-//        System.out.println(adminUsername + "\n" + adminPassword +"\n" + realm + "\n" + keycloakServerUrl + "\n" + clientId);
 
         ResponseEntity<Map> response = restTemplate.postForEntity(
                 "http://localhost:8443/realms/sni/protocol/openid-connect/token",
@@ -116,7 +115,6 @@ public class KeycloakAdminService {
     }
 
     public void assignRealRoleToUser(String token, String username, String roleName, String userId){
-//        String token = getAdminAccessToken();
         Map<String, Object> roleRep = getRealmRoleRepresentation(token, roleName);
 
         HttpHeaders headers = new HttpHeaders();

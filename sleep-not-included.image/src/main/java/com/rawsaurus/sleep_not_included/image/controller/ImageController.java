@@ -24,18 +24,10 @@ public class ImageController {
     private final ImageService imageService;
     @Value("${sni.message}")
     private String message;
-    @Value("${server.tomcat.max-swallow-size}")
-    private String maxSwallowSize;
-    @Value("${spring.servlet.multipart.max-file-size}")
-    private String servletMaxFileSize;
-    @Value("${spring.servlet.multipart.max-request-size}")
-    private String maxRequestSize;
 
     @GetMapping("/test")
     public String test(){
-        return "Max Sallow Size: " + maxSwallowSize +"\n"
-                + "Servlet Max File Size: " + servletMaxFileSize + "\n"
-                + "Max Request Size: " + maxRequestSize;
+        return "Message: " + message;
     }
 
     @GetMapping("/{id}")
@@ -62,16 +54,6 @@ public class ImageController {
     public ResponseEntity<List<String>> findAllUrlByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds){
         return ResponseEntity.ok(imageService.findAllUrlByOwnerIds(ownerService, ownerIds));
     }
-//
-//    @GetMapping(value = "/download/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
-//    public ResponseEntity<Resource> downloadImage(@RequestParam ImageType type, @PathVariable String name){
-//        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(imageService.downloadImage(type, name));
-//    }
-//
-//    @GetMapping(value = "/download/build-images/{name}", produces = MediaType.MULTIPART_MIXED_VALUE)
-//    public ResponseEntity<MultiValueMap<String, Object>> downloadBuildImages(@PathVariable String name){
-//        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.MULTIPART_MIXED).body(imageService.downloadBuildImages(name));
-//    }
 
     @PostMapping(value = "/upload/{name}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ROLE_USER')")

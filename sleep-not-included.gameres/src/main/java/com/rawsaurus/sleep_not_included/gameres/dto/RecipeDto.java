@@ -4,9 +4,7 @@ import java.util.List;
 
 public record RecipeDto(
         List<String> in,
-//        String in,
         String middle,
-//        String out
         List<String> out
 
 ) {

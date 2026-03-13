@@ -25,9 +25,9 @@ public interface ImageClient {
     @GetMapping(BASE + "/owner/{ownerService}/batch")
     ResponseEntity<List<ImageResponse>> findAllByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds);
 
-    @GetMapping("/owner/{ownerService}/{ownerId}/url")
+    @GetMapping(BASE + "/owner/{ownerService}/{ownerId}/url")
     ResponseEntity<List<String>> findUrlByOwner(@PathVariable String ownerService, @PathVariable Long ownerId);
 
-    @GetMapping("/owner/{ownerService}/batch/url")
+    @GetMapping(BASE + "/owner/{ownerService}/batch/url")
     ResponseEntity<List<String>> findAllUrlByOwnerIds(@PathVariable String ownerService, @RequestParam List<Long> ownerIds);
 }

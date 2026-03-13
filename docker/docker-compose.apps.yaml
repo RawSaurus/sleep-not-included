@@ -1,14 +1,14 @@
 # =============================================================================
-# docker-compose.apps.yml  —  Application microservices
+# docker-compose.apps.yaml  —  Application microservices
 #
 # Requires infra stack to be running first:
-#   docker compose -f docker-compose.infra.yml up -d
+#   docker compose -f docker-compose.infra.yaml up -d
 #
 # Start apps:
-#   docker compose -f docker-compose.apps.yml up -d
+#   docker compose -f docker-compose.apps.yaml up -d
 #
 # Build images before starting (from repo root):
-#   docker compose -f docker-compose.apps.yml build
+#   docker compose -f docker-compose.apps.yaml build
 # =============================================================================
 
 name: sni_apps
@@ -48,7 +48,7 @@ services:
   config-server:
     build:
       context: ../config-management
-      dockerfile: ../docker/dockerfiles/Dockerfile.config
+      dockerfile: ../docker/dockerfiles/Dockerfile.configserver
     image: sni/config-server:latest
     container_name: sni_config_server
     restart: unless-stopped
@@ -243,7 +243,7 @@ services:
       context: ../sleep-not-included.image
       dockerfile: ../docker/dockerfiles/Dockerfile.spring
     image: sni/image-service:latest
-    container_name: sli-image_service
+    container_name: sni-image_service
     environment:
       <<: *spring-env
       SPRING_APPLICATION_NAME: sleep-not-included-image

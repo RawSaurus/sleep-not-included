@@ -50,48 +50,18 @@ public class BuildService {
     private final BuildMapper buildMapper;
     private final RabbitTemplate rabbitTemplate;
 
+    //TODO implement helper method for repetitive enrichment process
+
     public String test(Long userId){
         return userClient.findUserById(userId).getBody().toString();
     }
 
     public BuildResponse findById(Long id){
-//        Build build = buildRepo.findById(id)
-//                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
-//        List<TagResponse> tags = tagClient.findAllByBuild(id).getBody();
-//
-//        return new BuildResponse(
-//                build.getId(),
-//                build.getName(),
-//                build.getDescription(),
-//                tags,
-//                build.getCreatorId(),
-//                build.getLikes()
-//        );
-
         return buildMapper.toResponse(
                 buildRepo.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Build not found"))
         );
     }
-
-//    public BuildResponse findByName(String name){
-//        Build build = buildRepo.findByName(name)
-//                .orElseThrow(() -> new EntityNotFoundException("Build not found"));
-//        List<TagResponse> tags = tagClient.findAllByBuild(build.getId()).getBody();
-//
-//        return new BuildResponse(
-//                build.getId(),
-//                build.getName(),
-//                build.getDescription(),
-//                tags,
-//                build.getCreatorId(),
-//                build.getLikes()
-//        );
-//        return buildMapper.toResponse(
-//                buildRepo.findByName(name)
-//                        .orElseThrow(() -> new EntityNotFoundException("Build not found"))
-//        );
-//    }
 
     public BuildDetailResponse findByName(String name){
         Build build = buildRepo.findByName(name)
@@ -143,7 +113,6 @@ public class BuildService {
 
     public Page<BuildDetailResponse> findAllBuildDetailsByName(String name, Pageable pageable) {
         List<Build> content = buildRepo.searchBuilds(name, pageable);
-//        List<Build> content = builds.getContent();
 
         if (content.isEmpty()) {
             return Page.empty(pageable);
@@ -164,7 +133,6 @@ public class BuildService {
     }
 
     public Page<BuildDetailResponse> findAllBuildDetailsByTags(List<Long> tagIds, Pageable pageable) {
-//        List<Long> tagIds = tags.stream().map(TagResponse::id).toList();
         Page<BuildTags> buildTags = buildTagsRepo.findAllByTagIdIn(tagIds, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         Page<Build> builds = buildRepo.findAllByIdIn(
                 buildTags.getContent().stream().map(BuildTags::getBuildId).toList(),
@@ -198,10 +166,6 @@ public class BuildService {
                 .toList();
     }
 
-    /**
-     * Resolve a list of tag IDs to TagResponse objects.
-     * Add to BuildService.
-     */
     public List<TagResponse> resolveTagsByIds(List<Long> tagIds) {
         List<TagResponse> tags = tagClient.findAllByIds(tagIds).getBody();
         return tags != null ? tags : List.of();
@@ -214,7 +178,6 @@ public class BuildService {
      *   - name only → filter by name using LIKE search
      *   - tags only → filter by tag membership
      *   - both      → intersect: builds matching name AND having all selected tags
-     *
      */
     public Page<BuildDetailResponse> findAllWithFilters(String name, List<Long> tagIds, Pageable pageable) {
 
@@ -263,7 +226,7 @@ public class BuildService {
             return Page.empty(pageable);
         }
 
-        // 3. Manual pagination over the filtered list
+        //Manual pagination over the filtered list
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), nameMatches.size());
         if (start >= nameMatches.size()) {
@@ -271,7 +234,7 @@ public class BuildService {
         }
         List<Build> pageContent = nameMatches.subList(start, end);
 
-        // 4. Enrich to BuildDetailResponse
+        //Enrich to BuildDetailResponse
         List<Long> buildIds = extractBuildIds(pageContent);
         List<Long> creatorIds = extractCreatorIds(pageContent);
 
@@ -297,12 +260,6 @@ public class BuildService {
     }
 
     public Page<BuildDetailResponse> findAllFromUser(Long userId, Pageable pageable){
-//        var user = userClient.findUserById(userId).getBody();
-//        if (user == null){
-//            throw new EntityNotFoundException("User not found");
-//        }
-//        return buildRepo.findAllByCreatorId(user.id(), pageable)
-//                .map(buildMapper::toResponse);
         Page<Build> builds = buildRepo.findAllByCreatorId(userId, pageable);
         List<Build> content = builds.getContent();
 
@@ -325,31 +282,6 @@ public class BuildService {
     }
 
     public Page<BuildDetailResponse> findAllLikedBuilds(Long userId, Pageable pageable){
-//        var user = userClient.findUserById(userId).getBody();
-//        if (user == null){
-//            throw new EntityNotFoundException("User not found");
-//        }
-//        List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
-//        List<BuildResponse> builds = new ArrayList<>();
-//        for(LikedBuilds l : likedBuilds){
-//            builds.add(
-//                    buildMapper.toResponse(
-//                            buildRepo.findById(l.getBuildId())
-//                                    .orElseThrow(() -> new EntityNotFoundException("Build not found"))
-//                    )
-//            );
-//        }
-//
-//        int start = (int) pageable.getOffset();
-//        int end = Math.min(start + pageable.getPageSize(), builds.size());
-//
-//        if (start >= builds.size()) {
-//            return new PageImpl<>(Collections.emptyList(), pageable, builds.size());
-//        }
-//
-//        return new PageImpl<BuildResponse>(
-//                builds.subList(start, end), pageable, builds.size()
-//        );
         List<LikedBuilds> likedBuilds = likedBuildsRepo.findAllByUserId(userId);
         Page<Build> builds = buildRepo.findAllByIdIn(
                 likedBuilds.stream().map(LikedBuilds::getBuildId).toList(),

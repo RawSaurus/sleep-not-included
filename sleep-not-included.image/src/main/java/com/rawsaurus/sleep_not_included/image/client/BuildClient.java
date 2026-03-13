@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "SLEEP-NOT-INCLUDED-BUILD", configuration = FeignSecurityConfig.class)
 public interface BuildClient {
 
-    String ROOT = "/api/v1/build";
+    String BASE = "/api/v1/build";
 
-    @GetMapping(ROOT + "/{id}")
+    @GetMapping(BASE + "/{id}")
     ResponseEntity<BuildResponse> findById(@PathVariable Long id);
 
-    @GetMapping(ROOT + "/name/{name}")
+    @GetMapping(BASE + "/name/{name}")
     ResponseEntity<BuildResponse> findByName(@PathVariable String name);
 }

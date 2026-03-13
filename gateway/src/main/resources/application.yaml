@@ -6,5 +6,454 @@ spring:
   application:
     name: gateway
 
-server:
-  port: 8080
+#-------------------------------------------------------------
+# Display config for dev profile with dummy data
+#-------------------------------------------------------------
+#  rabbitmq:
+#    host: dummy
+#    port: dummy
+#    username: dummy
+#    password: dummy
+#  zipkin:
+#    base-url: dummy
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: dummy
+#  cloud:
+#    gateway:
+#      default-filters:
+#        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+#      server:
+#        webflux:
+#          routes:
+#            - id: sleep-not-included-user
+#              uri: lb://SLEEP-NOT-INCLUDED-USER
+#              predicates:
+#                - Path=/user/**
+#              filters:
+#                - "RewritePath=/user(?<segment>/?.*), /api/v1/user${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: userCB
+#                    fallbackUri: forward:/fallback/user
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#            - id: sleep-not-included-build
+#              uri: lb://SLEEP-NOT-INCLUDED-BUILD
+#              predicates:
+#                - Path=/build/**
+#              filters:
+#                - "RewritePath=/build(?<segment>/?.*), /api/v1/build${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: buildCB
+#                    fallbackUri: forward:/fallback/build
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#            - id: sleep-not-included-comment
+#              uri: lb://SLEEP-NOT-INCLUDED-COMMENT
+#              predicates:
+#                - Path=/comment/**
+#              filters:
+#                - "RewritePath=/comment(?<segment>/?.*), /api/v1/comment${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: commentCB
+#                    fallbackUri: forward:/fallback/comment
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#            - id: sleep-not-included-tag
+#              uri: lb://SLEEP-NOT-INCLUDED-TAG
+#              predicates:
+#                - Path=/tag/**
+#              filters:
+#                - "RewritePath=/tag(?<segment>/?.*), /api/v1/tag${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: tagCB
+#                    fallbackUri: forward:/fallback/tag
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#            - id: sleep-not-included-gameres
+#              uri: lb://SLEEP-NOT-INCLUDED-GAMERES
+#              predicates:
+#                - Path=/gameres/**
+#              filters:
+#                - "RewritePath=/gameres(?<segment>/?.*), /api/v1/gameres${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: gameresCB
+#                    fallbackUri: forward:/fallback/gameres
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#            - id: sleep-not-included-image
+#              uri: lb://SLEEP-NOT-INCLUDED-IMAGE
+#              predicates:
+#                - Path=/image/**
+#              filters:
+#                - "RewritePath=/image(?<segment>/?.*), /api/v1/image${segment}"
+#
+#                - name: CircuitBreaker
+#                  args:
+#                    name: imageCB
+#                    fallbackUri: forward:/fallback/image
+#                    statusCodes:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                      - GATEWAY_TIMEOUT
+#
+#                - name: Retry
+#                  args:
+#                    retries: 2
+#                    statuses:
+#                      - INTERNAL_SERVER_ERROR
+#                      - BAD_GATEWAY
+#                      - SERVICE_UNAVAILABLE
+#                    methods:
+#                      - GET
+#                      - DELETE
+#                    backoff:
+#                      firstBackoff: 100ms
+#                      maxBackoff: 500ms
+#                      factor: 2
+#                      basedOnPreviousValue: false
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#    prometheus:
+#      enabled: true
+#  metrics:
+#    tags:
+#      application: ${spring.application.name}
+#  health:
+#    circuitbreakers:
+#      enabled: true
+#  tracing:
+#    sampling:
+#      probability: 1.0
+#
+#eureka:
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    serviceUrl:
+#      defaultZone: dummy
+#
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#
+#      userCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#
+#      buildCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#      commentCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#      tagCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#      gameresCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#      imageCB:
+#        registerHealthIndicator: true
+#        slidingWindowSize: 20
+#        minimumNumberOfCalls: 10
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        waitDurationInOpenState: 10s
+#        failureRateThreshold: 60
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        slidingWindowType: count_based
+#        slowCallDurationThreshold: 3s
+#        slowCallRateThreshold: 80
+#        recordExceptions:
+#          - java.io.IOException
+#          - java.util.concurrent.TimeoutException
+#          - org.springframework.cloud.gateway.support.NotFoundException
+#        ignoreExceptions:
+#          - com.rawsaurus.gateway.handler.BusinessException
+#
+#  timelimiter:
+#    instances:
+#      userCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#      buildCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#      commentCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#      tagCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#      gameresCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#      imageCB:
+#        timeoutDuration: 5s
+#        cancelRunningFuture: true
+#
+#  ratelimiter:
+#    instances:
+#      userRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#      buildRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#      commentRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#      tagRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#      gameresRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#      imageRL:
+#        limitForPeriod: 50
+#        limitRefreshPeriod: 1s
+#        timeoutDuration: 0ms
+#
+#sni:
+#  message: "dev env"
+#  security:
+#    admin-username: dummy
+#    admin-password: dummy
+#    keycloak-server-url: dummy
+#    realm: dummy
+#    client-id: dummy
+#    client-id-frontend: dummy
+#    client-uuid: dummy
+#    client-uuid-frontend: dummy
+#    allowed-origins:
+#      - "dummy"
+#
+#logging:
+#  level:
+#    root: INFO
+#    # org.springframework.cloud.gateway.route.RouteDefinitionLocator: INFO
+#    org.springframework.cloud.gateway: DEBUG
+#    org.springframework.security: TRACE
+#    org.springframework.web: DEBUG
+#  file:
+#    name: logs/gateway.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5mb
+#      max-history: 7
+#
+#springdoc:
+#  show-actuator: true
+#  swagger-ui:
+#    oauth:
+#      client-id: dummy
+#      use-pkce-with-authorization-code-grant: true
+#    enabled: true
+#    path: /swagger-ui.html
+#  api-docs:
+#    enabled: true
+#    path: /v3/api-docs
+#  cache:
+#    disabled: false
+#server:
+#  port: dummy

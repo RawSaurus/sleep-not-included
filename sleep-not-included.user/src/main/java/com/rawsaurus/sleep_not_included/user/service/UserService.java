@@ -81,7 +81,6 @@ public class UserService {
         user.setKeycloakId(keycloakId);
         user.setRole(UserRole.USER);
 
-        //pass token from here, don't create new one
         keycloakAdminService.assignRealRoleToUser(
                 token,
                 request.username(),
@@ -122,6 +121,7 @@ public class UserService {
         return "User created successfully";
     }
 
+    //TODO remove parameter, check by security token
     public UserResponse updateUser(Long userId, UserRequest request){
         //check for user
         User user = userRepo.findById(userId)
@@ -132,6 +132,7 @@ public class UserService {
         return userMapper.toResponse(userRepo.save(user));
     }
 
+    //TODO remove parameter, check by security token
     @Transactional
     public String deleteUser(Long userId){
         User user = userRepo.findById(userId)

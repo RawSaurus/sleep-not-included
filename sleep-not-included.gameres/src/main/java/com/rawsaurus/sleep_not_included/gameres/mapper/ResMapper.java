@@ -16,8 +16,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ResMapper {
 
-    // ─── toResponse (polymorphic dispatch) ───────────────────────────────────
-
     public ResResponse toResponse(GameRes res) {
         return switch (res.getResType()) {
             case ELEMENT  -> toElementResponse((Element) res);
@@ -38,8 +36,6 @@ public class ResMapper {
         };
     }
 
-    // ─── toEntity (polymorphic dispatch) ─────────────────────────────────────
-
     public GameRes toEntity(ResRequest request) {
         return switch (request.getResType()) {
             case ELEMENT  -> toElementEntity((ElementRequest) request);
@@ -59,8 +55,6 @@ public class ResMapper {
             case MISC     -> toOtherEntity((OtherRequest) request);
         };
     }
-
-    // ─── Shared helpers ──────────────────────────────────────────────────────
 
     private ValueUnitDto toValueUnitDto(ValueUnit v) {
         if (v == null) return null;
