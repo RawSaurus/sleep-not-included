@@ -18,6 +18,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -46,35 +47,87 @@ public class CommentService {
     }
 
     public CommentResponse findById(Long id){
-        return commentMapper.toResponse(
-                commentRepo.findById(id)
-                        .orElseThrow(() -> new EntityNotFoundException("Comment not found"))
-        );
+//        return commentMapper.toResponse(
+//                commentRepo.findById(id)
+//                        .orElseThrow(() -> new EntityNotFoundException("Comment not found"))
+//        );
+        Comment comment = commentRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+
+        return toCommentResponse(comment);
     }
 
     public Page<CommentResponse> findAllByBuild(Long buildId, Pageable pageable){
+//        var build = buildClient.findById(buildId).getBody();
+//        if(build == null){
+//            throw new EntityNotFoundException("Build not found");
+//        }
+//        return commentRepo.findAllByBuildId(build.id(), pageable)
+//                .map(commentMapper::toResponse);
         var build = buildClient.findById(buildId).getBody();
         if(build == null){
             throw new EntityNotFoundException("Build not found");
         }
-        return commentRepo.findAllByBuildId(build.id(), pageable)
-                .map(commentMapper::toResponse);
+
+        Page<Comment> comments = commentRepo.findAllByBuildId(build.id(), pageable);
+        List<Comment> content = comments.getContent();
+
+        if(content.isEmpty()){
+            return Page.empty(pageable);
+        }
+
+        Long currentLoggedUserId = resolveUserId();
+        List<CommentResponse> responses = content.stream()
+                .map(c -> toCommentResponse(c, currentLoggedUserId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, comments.getTotalElements());
     }
 
     public Page<CommentResponse> findAllByUser(Long userId, Pageable pageable){
+//        var user = userClient.findUser(userId).getBody();
+//        if(user == null){
+//            throw new EntityNotFoundException("User not found");
+//        }
+//        return commentRepo.findAllByUserId(user.id(), pageable)
+//                .map(commentMapper::toResponse);
         var user = userClient.findUser(userId).getBody();
         if(user == null){
             throw new EntityNotFoundException("User not found");
         }
-        return commentRepo.findAllByUserId(user.id(), pageable)
-                .map(commentMapper::toResponse);
+        Page<Comment> comments = commentRepo.findAllByUserId(user.id(), pageable);
+        List<Comment> content = comments.getContent();
+
+        if(content.isEmpty()){
+            return Page.empty(pageable);
+        }
+        Long currentLoggedUserId = resolveUserId();
+        List<CommentResponse> responses = content.stream()
+                .map(c -> toCommentResponse(c, currentLoggedUserId))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, comments.getTotalElements());
     }
 
     public Page<CommentResponse> findAllResponses(Long parentId, Pageable pageable){
+//        Comment parent = commentRepo.findById(parentId)
+//                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+//        return commentRepo.findAllByParent(parent, pageable)
+//                .map(commentMapper::toResponse);
         Comment parent = commentRepo.findById(parentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        return commentRepo.findAllByParent(parent, pageable)
-                .map(commentMapper::toResponse);
+        Page<Comment> comments = commentRepo.findAllByParent(parent, pageable);
+        List<Comment> content = comments.getContent();
+
+        if (content.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Long currentLoggedUserId = resolveUserId();
+        List<CommentResponse> responses = content.stream()
+                .map(c -> toCommentResponse(c, currentLoggedUserId))
+                .toList();
+        return new PageImpl<>(responses, pageable, comments.getTotalElements());
     }
 
     public CommentResponse createComment(Long buildId, CommentRequest request){
@@ -212,6 +265,39 @@ public class CommentService {
         likedComsRepo.deleteAll(likedCommentsToDelete);
     }
 
+    private CommentResponse toCommentResponse(Comment comment){
+        Long userId = resolveUserId();
+        Boolean isLiked = userId != null
+                ? likedComsRepo.existsByUserIdAndCommentId(userId, comment.getId())
+                : null;
+        return new CommentResponse(
+                comment.getId(),
+                comment.getBody(),
+                comment.getUserId().toString(),
+                comment.getUsername(),
+                comment.getLikes(),
+                comment.getCreatedAt(),
+                comment.getNumOfResponses(),
+                isLiked
+        );
+    }
+
+    private CommentResponse toCommentResponse(Comment comment, Long userId){
+        Boolean isLiked = userId != null
+                ? likedComsRepo.existsByUserIdAndCommentId(userId, comment.getId())
+                : null;
+        return new CommentResponse(
+                comment.getId(),
+                comment.getBody(),
+                comment.getUserId().toString(),
+                comment.getUsername(),
+                comment.getLikes(),
+                comment.getCreatedAt(),
+                comment.getNumOfResponses(),
+                isLiked
+        );
+    }
+
     private UserResponse resolveUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -222,5 +308,17 @@ public class CommentService {
         String keycloakId = jwt.getSubject(); // "sub" claim
         var user = userClient.findUserByKeycloakId(keycloakId).getBody();
         return user != null ? user : null;
+    }
+
+    private Long resolveUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String keycloakId = jwt.getSubject(); // "sub" claim
+        var user = userClient.findUserByKeycloakId(keycloakId).getBody();
+        return user != null ? user.id() : null;
     }
 }

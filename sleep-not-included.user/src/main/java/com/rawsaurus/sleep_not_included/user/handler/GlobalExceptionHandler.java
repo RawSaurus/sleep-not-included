@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.MessagingException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,6 +38,18 @@ public class GlobalExceptionHandler {
                         ExceptionResponse.builder()
                                 .businessErrorCode(VALIDATION_FAILURE.getCode())
                                 .businessErrorDescription(VALIDATION_FAILURE.getDescription())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionResponse> handleException(AccessDeniedException exp){
+        return ResponseEntity.status(ACCESS_DENIED.getHttpstatus())
+                .body(
+                        ExceptionResponse.builder()
+                                .businessErrorCode(ACCESS_DENIED.getCode())
+                                .businessErrorDescription(ACCESS_DENIED.getDescription())
+                                .error(exp.getMessage())
                                 .build()
                 );
     }

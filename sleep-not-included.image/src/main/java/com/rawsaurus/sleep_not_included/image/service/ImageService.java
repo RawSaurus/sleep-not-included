@@ -258,7 +258,8 @@ public class ImageService {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Thumbnails.of(input)
                     .size(width, height)
-                    .crop(Positions.CENTER)
+//                    .crop(Positions.CENTER)
+                    .keepAspectRatio(true)
                     .outputFormat("jpeg")
                     .outputQuality(0.85)
                     .toOutputStream(out);

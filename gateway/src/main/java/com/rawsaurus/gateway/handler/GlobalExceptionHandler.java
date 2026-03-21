@@ -74,7 +74,6 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
                     .build();
 
         } else if (ex instanceof NotFoundException) {
-            // No downstream route/service found
             status = HttpStatus.NOT_FOUND;
             body = ExceptionResponse.builder()
                     .businessErrorCode(ROUTE_NOT_FOUND.getCode())
@@ -124,56 +123,4 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             return exchange.getResponse().setComplete();
         }
     }
-
-//    @ExceptionHandler(HandlerMethodValidationException.class)
-//    public ResponseEntity<ExceptionResponse> handleException(HandlerMethodValidationException exp){
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                .body(
-//                        ExceptionResponse.builder()
-//                                .businessErrorCode(VALIDATION_FAILURE.getCode())
-//                                .businessErrorDescription(VALIDATION_FAILURE.getDescription())
-//                                .build()
-//                );
-//    }
-//
-//    @ExceptionHandler(ActionNotAllowed.class)
-//    public ResponseEntity<ExceptionResponse> handleException(ActionNotAllowed exp){
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                .body(ExceptionResponse.builder()
-//                        .businessErrorCode(ACTION_NOT_ALLOWED.getCode())
-//                        .businessErrorDescription(ACTION_NOT_ALLOWED.getDescription())
-//                        .error(exp.getMessage())
-//                        .build()
-//                );
-//    }
-//
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public ResponseEntity<ExceptionResponse> handleException(MethodArgumentNotValidException exp){
-//        Set<String> errors = new HashSet<>();
-//        exp.getBindingResult().getAllErrors()
-//                .forEach(error -> {
-//                    var errorMessage = error.getDefaultMessage();
-//                    errors.add(errorMessage);
-//                });
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                .body(
-//                        ExceptionResponse.builder()
-//                                .businessErrorCode(VALIDATION_FAILURE.getCode())
-//                                .businessErrorDescription(VALIDATION_FAILURE.getDescription())
-//                                .validationErrors(errors)
-//                                .build()
-//                );
-//    }
-//
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ExceptionResponse> handleException(Exception exp){
-//        exp.printStackTrace();
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(
-//                        ExceptionResponse.builder()
-//                                .businessErrorDescription("Internal error, contact the admin")
-//                                .error(exp.getMessage())
-//                                .build()
-//                );
-//    }
 }

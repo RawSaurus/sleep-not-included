@@ -50,8 +50,6 @@ public class BuildService {
     private final BuildMapper buildMapper;
     private final RabbitTemplate rabbitTemplate;
 
-    //TODO implement helper method for repetitive enrichment process
-
     public String test(Long userId){
         return userClient.findUserById(userId).getBody().toString();
     }

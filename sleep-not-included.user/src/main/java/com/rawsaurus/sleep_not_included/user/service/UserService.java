@@ -16,6 +16,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,9 +126,11 @@ public class UserService {
         return "User created successfully";
     }
 
-    //TODO remove parameter, check by security token
-    public UserResponse updateUser(Long userId, UserRequest request){
-        //check for user
+    public UserResponse updateOwnUser(UserRequest request){
+        Long userId = resolveUserId();
+        if(userId == null){
+            throw new AccessDeniedException("You are not owner of this profile");
+        }
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -132,9 +139,35 @@ public class UserService {
         return userMapper.toResponse(userRepo.save(user));
     }
 
-    //TODO remove parameter, check by security token
+    public UserResponse adminUpdateUser(Long userId, UserRequest request){
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        userMapper.updateToEntity(request, user);
+
+        return userMapper.toResponse(userRepo.save(user));
+    }
+
     @Transactional
-    public String deleteUser(Long userId){
+    public String deleteOwnUser(){
+        Long userId = resolveUserId();
+        if(userId == null){
+            throw new AccessDeniedException("You are not owner of this profile");
+        }
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        userRepo.delete(user);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                "",
+                new DeleteEntityEvent("user", userId));
+
+        return "User deleted successfully";
+    }
+
+    @Transactional
+    public String adminDeleteUser(Long userId){
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -156,5 +189,17 @@ public class UserService {
         user.setProfilePicUrl(event.imageUrl());
 
         userRepo.save(user);
+    }
+
+    private Long resolveUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String keycloakId = jwt.getSubject(); // "sub" claim
+        var user = findUserByKeycloakId(keycloakId);
+        return user != null ? user.id() : null;
     }
 }

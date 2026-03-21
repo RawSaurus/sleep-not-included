@@ -75,18 +75,32 @@ public class UserController {
         return ResponseEntity.ok(userService.checkKeycloakAndCreateUser(keycloakId));
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<UserResponse> updateUser(
+    public ResponseEntity<UserResponse> updateOwnUser(
+            @Valid @RequestBody UserRequest request
+    ){
+        return ResponseEntity.ok(userService.updateOwnUser(request));
+    }
+
+    @PutMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<UserResponse> adminUpdateUser(
             @PathVariable Long userId,
             @Valid @RequestBody UserRequest request
     ){
-        return ResponseEntity.ok(userService.updateUser(userId, request));
+        return ResponseEntity.ok(userService.adminUpdateUser(userId, request));
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<?> deleteOwnUser(){
+        return ResponseEntity.ok(userService.deleteOwnUser());
     }
 
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId){
-        return ResponseEntity.ok(userService.deleteUser(userId));
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<?> deleteOwnUser(@PathVariable Long userId){
+        return ResponseEntity.ok(userService.adminDeleteUser(userId));
     }
 }

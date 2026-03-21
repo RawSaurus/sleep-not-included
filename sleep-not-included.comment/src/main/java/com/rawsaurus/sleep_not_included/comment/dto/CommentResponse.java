@@ -9,6 +9,7 @@ public record CommentResponse(
         String username,
         Integer likes,
         LocalDateTime createdAt,
-        Integer numOfResponses
+        Integer numOfResponses,
+        Boolean isLiked
 ) {
 }

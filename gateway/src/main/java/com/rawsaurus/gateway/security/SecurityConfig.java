@@ -32,12 +32,14 @@ public class SecurityConfig {
 
     @Value("${sni.security.client-id-frontend}")
     private String clientIdFrontend;
-    @Value("${sni.security.allowed-origins}")
-    private List<String> allowedOrigins;
+//    @Value("${sni.security.allowed-origins}")
+//    private List<String> allowedOrigins;
 
+    private final SecurityProperties securityProperties;
     private final CustomAuthEntryPoint customAuthEntryPoint;
 
-    public SecurityConfig(CustomAuthEntryPoint customAuthEntryPoint) {
+    public SecurityConfig(SecurityProperties securityProperties, CustomAuthEntryPoint customAuthEntryPoint) {
+        this.securityProperties = securityProperties;
         this.customAuthEntryPoint = customAuthEntryPoint;
     }
 
@@ -95,7 +97,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedOrigins(securityProperties.getAllowedOrigins());
         configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE","PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
