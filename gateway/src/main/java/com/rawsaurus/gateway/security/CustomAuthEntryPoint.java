@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class CustomAuthEntryPoint implements ServerAuthenticationEntryPoint {
@@ -23,7 +26,11 @@ public class CustomAuthEntryPoint implements ServerAuthenticationEntryPoint {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
             DataBuffer buffer = response.bufferFactory()
-                    .wrap("{\"error\": \"Invalid or expired token\"}".getBytes());
+                    .wrap(ex.getMessage().getBytes());
+//                    .wrap("{\"error\": \"Invalid or expired token\"}".getBytes(), ex.getMessage().getBytes());
+//                   byte[] bytes1 = "{\"error\": \"Invalid or expired token\"}".getBytes();
+//                   byte[] bytes2 = ex.getMessage().getBytes();
+//            List<Byte> bytes = new ArrayList<>();
             return response.writeWith(Mono.just(buffer));
         }
         return Mono.empty();

@@ -1,0 +1,48 @@
+
+spring:
+  application:
+    name: sleep-not-included-tag
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: false
+      discovery:
+        enabled: false
+    discovery:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+
+# Disable Eureka client in tests
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# Required by SecurityConfig's @Value lookup
+sni:
+  security:
+    client-id-frontend: test-client
+    internal-api-key: test-internal-key
+
+  # Point the OAuth2 resource server to a dummy issuer in tests — real JWT
+  # verification is bypassed by spring-security-test's `jwt()` request processor.
+  # But the bean still has to initialize, so we provide a URI that won't be hit.
+  # (If your SecurityConfig doesn't read from an issuer-uri property, remove this.)
+  # spring.security.oauth2.resourceserver.jwt.issuer-uri: http://localhost:0/dummy
+
+# Silence Zipkin during tests
+management:
+  tracing:
+    export:
+      enabled: false
+      zipkin:
+        enabled: false

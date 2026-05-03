@@ -10,9 +10,11 @@ import com.rawsaurus.sleep_not_included.build.mapper.BuildMapper;
 import com.rawsaurus.sleep_not_included.build.model.Build;
 import com.rawsaurus.sleep_not_included.build.model.BuildTags;
 import com.rawsaurus.sleep_not_included.build.model.LikedBuilds;
+import com.rawsaurus.sleep_not_included.build.model.OutboxEvent;
 import com.rawsaurus.sleep_not_included.build.repo.BuildRepository;
 import com.rawsaurus.sleep_not_included.build.repo.BuildTagsRepository;
 import com.rawsaurus.sleep_not_included.build.repo.LikedBuildsRepository;
+import com.rawsaurus.sleep_not_included.build.repo.OutboxEventRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 import static com.rawsaurus.sleep_not_included.build.config.RabbitMQConfig.*;
@@ -42,6 +45,7 @@ public class BuildService {
     private final BuildRepository buildRepo;
     private final LikedBuildsRepository likedBuildsRepo;
     private final BuildTagsRepository buildTagsRepo;
+    private final OutboxEventRepository outboxRepo;
 
     private final UserClient userClient;
     private final TagClient tagClient;
@@ -400,11 +404,20 @@ public class BuildService {
         likedBuildsRepo.deleteAll(likedBuilds);
         buildTagsRepo.deleteAllByBuildId(build.getId());
 
-        rabbitTemplate.convertAndSend(
-                BUILD_EVENT_EXCHANGE,
-                "",
-                new DeleteEntityEvent("build", buildId)
+        outboxRepo.save(OutboxEvent.builder()
+                .aggregateType("build")
+                .aggregateId(buildId)
+                .eventType("ENTITY_DELETED")
+                .exchange(BUILD_EVENT_EXCHANGE)
+                .payload(new DeleteEntityEvent("build", buildId).toString())
+                .build()
         );
+
+//        rabbitTemplate.convertAndSend(
+//                BUILD_EVENT_EXCHANGE,
+//                "",
+//                new DeleteEntityEvent("build", buildId)
+//        );
 
         return "Build deleted successfully";
     }

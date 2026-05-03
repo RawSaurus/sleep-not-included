@@ -28,7 +28,7 @@
         </processorPath>
         <module name="eureka" />
       </profile>
-      <profile name="Annotation profile for sleep-not-included.gameres" enabled="true">
+      <profile name="Annotation profile for sleep-not-included.tag" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />

@@ -16,4 +16,5 @@ public interface BuildMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
     void updateToEntity(BuildRequest request, @MappingTarget Build build);
+
 }
